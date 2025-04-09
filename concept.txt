@@ -1,0 +1,51 @@
+A todo list where each task has
+  - Sub tasks
+  - Time estimates
+  - Deadline
+  - Pomodoro
+  - Priority
+  - Enthusiasm
+
+Recurring tasks:
+  - Creates a subtask on a recurring interval
+  - Duplicates last completed task? Edits are pushed forward then
+
+Start my day, a function that tries to balance high priority tasks with tasks that will get you going:
+ I.e short, high enthusiasm task to kick things off before going into a high priority low enthusiasm task.
+ Optional: set an amount of work time, to prioritize getting things done
+
+Should there be a 'balance' value? Enthusiasm vs priority: getting tasks done
+Should there be a 'buffer' value? Average amount of over/under shoot for tasks - specific to larger tasks.
+
+Priority and enthusiasm should be linked lists.
+
+Starting a task:
+  Set a focus time (optional: use default) and break time (optional: use default)
+
+Break time:
+  If not finished, queue up the next task if current is low priority. Can choose to continue with task. Should add warning if not enough time is allocated, considering buffer.
+
+SQLite, push changes up to github
+
+Database design:
+User:
+  - ID
+  - Date Created
+  - Date Updated
+  - Name
+  - Allocated time (check against date updated, if day is different require it to be reset)
+
+Task:
+  - ID
+  - Date Created
+  - Date Updated
+  - Name
+  - Details
+  - Due Date
+  - Time estimate
+  - Time spent
+
+Missing:
+  - Subtasks
+  - Priority
+  - Enthusiasm
