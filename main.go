@@ -22,7 +22,7 @@ func main() {
 	if len(os.Args) == 0 {
 		activeMode(s)
 	} else {
-		// Run single command
+		runSingleCommand(s)
 	}
 }
 
@@ -34,7 +34,4 @@ func activeMode(s *state) {
 			fmt.Println(scanner.Text())
 		}
 	}
-}
-
-func singleRunMode(s *state) {
 }
