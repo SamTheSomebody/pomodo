@@ -4,8 +4,6 @@ func runSingleCommand(s *state) {
 		cmds := commands{
 			values: make(map[string]func(*state, command) error)
 		}	
-		//cmds.register("register", createUserHandler) //username
-		//cmds.register("login", loginHandler) //username
 		cmds.register("add", addTaskHandler) //taskname -optional params:
 		cmds.register("done", completeTaskHandler) //taskname -optional params: time taken
 		cmds.register("edit", editTaskHandler) //taskname -optional params

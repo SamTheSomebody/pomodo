@@ -9,8 +9,8 @@ CREATE TABLE tasks (
   time_estimate_seconds INTEGER,
   time_spent_seconds INTEGER DEFAULT 0,
   priority INTEGER,
-  enthusiasm INTEGER,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE
+  enthusiasm INTEGER
+  -- user_id UUID REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- +goose Down
