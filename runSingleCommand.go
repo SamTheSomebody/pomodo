@@ -9,13 +9,17 @@ func runSingleCommand(s *state) {
 	cmds := commands{
 		values: make(map[string]func(*state, command) error),
 	}
+	cmds.register("list", listTaskHandler)
 	cmds.register("add", addTaskHandler)           // taskname -optional params: -d due at, -t time estimate, -s description, -e enthusiasm, -p priority
 	cmds.register("done", completeTaskHandler)     // taskname -optional params: time taken
 	cmds.register("edit", editTaskHandler)         // taskname -optional params
 	cmds.register("start", startTaskHandler)       // taskname or duration
 	cmds.register("allocate", allocateTimeHandler) // duration
 	c := createCommandFromInput()
-	cmds.run(c, s)
+	err := cmds.run(c, s)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func createCommandFromInput() command {

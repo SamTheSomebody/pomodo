@@ -3,6 +3,9 @@ INSERT INTO tasks (id, created_at, updated_at, name, description, due_at, time_e
 VALUES (?, NOW(), NOW(), ?, ?, ?, ?, ?, ?)
 RETURNING *;
 
+-- name: GetTasks :many
+SELECT * FROM tasks;
+
 -- name: GetTaskByName :one
 SELECT * FROM tasks WHERE name = ?;
 

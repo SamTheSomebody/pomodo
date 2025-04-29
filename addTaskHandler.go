@@ -85,6 +85,11 @@ func addTaskHandler(s *state, c command) error {
 		}
 	}
 
-	s.DB.CreateTask(context.Background(), params)
+	task, err := s.DB.CreateTask(context.Background(), params)
+	if err != nil {
+		return err
+	}
+
+	printTask(task)
 	return nil
 }
