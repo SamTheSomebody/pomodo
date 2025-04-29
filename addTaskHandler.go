@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"database/sql"
 	"log"
 	"strconv"
@@ -24,6 +25,15 @@ type CreateTaskParams struct {
 } */
 
 func addTaskHandler(s *state, c command) error {
+	if (s.CFG.IsDebugMode) {
+		fmt.Println("[DEBUG] Adding task")
+	}
+
+	name, ok := c.arguments["default"]
+	if !ok {
+		return errors.New("Task has no name!")
+	}
+
 	params := database.CreateTaskParams{
 		ID:   uuid.New(),
 		Name: c.arguments["default"],
@@ -32,7 +42,7 @@ func addTaskHandler(s *state, c command) error {
 	if value, ok := c.arguments["-d"]; ok {
 		time, err := time.Parse(time.Stamp, value)
 		if err != nil {
-			log.Fatal("Unable to parse due at: " + value)
+			return errors.New("Unable to parse due at: " + value)
 		}
 		params.DueAt = sql.NullTime{
 			Time: time, Valid: true,
@@ -42,7 +52,7 @@ func addTaskHandler(s *state, c command) error {
 	if value, ok := c.arguments["-t"]; ok {
 		duration, err := time.ParseDuration(value)
 		if err != nil {
-			log.Fatal("Unable to parse time estimate: " + value)
+			return errors.New("Unable to parse time estimate: " + value)
 		}
 		params.TimeEstimateSeconds = sql.NullInt64{
 			Int64: int64(duration.Seconds()), Valid: true,
@@ -52,7 +62,7 @@ func addTaskHandler(s *state, c command) error {
 	if value, ok := c.arguments["-p"]; ok {
 		amount, err := strconv.ParseInt(value, 10, 32)
 		if err != nil {
-			log.Fatal("Unable to parse priority: " + value)
+			return errors.New("Unable to parse priority: " + value)
 		}
 		if amount > 10 {
 			amount = 10
@@ -67,7 +77,7 @@ func addTaskHandler(s *state, c command) error {
 	if value, ok := c.arguments["-e"]; ok {
 		amount, err := strconv.ParseInt(value, 10, 32)
 		if err != nil {
-			log.Fatal("Unable to parse enthusiasm: " + value)
+			return errors.New("Unable to parse enthusiasm: " + value)
 		}
 		if amount > 10 {
 			amount = 10
