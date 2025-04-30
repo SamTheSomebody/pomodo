@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -17,12 +18,20 @@ type state struct {
 	CLI      *cli
 }
 
-func InitializeState() *state {
+type Config struct {
+	IsDebugMode bool
+}
+
+func InitializeState(isDebugMode bool) *state {
 	db, err := sql.Open("sqlite3", "./tasks.db")
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	dbQueries := database.New(db)
+	if isDebugMode {
+		fmt.Println("[DEBUG] Creating state")
+	}
 	return &state{
 		DB: dbQueries,
 		CFG: &Config{

@@ -1,6 +1,6 @@
 -- name: CreateTask :one
 INSERT INTO tasks (id, created_at, updated_at, name, description, due_at, time_estimate_seconds, priority, enthusiasm)
-VALUES (?, NOW(), NOW(), ?, ?, ?, ?, ?, ?)
+VALUES (?, datetime('now'), datetime('now'), ?, ?, ?, ?, ?, ?)
 RETURNING *;
 
 -- name: GetTasks :many

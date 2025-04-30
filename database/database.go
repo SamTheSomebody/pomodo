@@ -1,0 +1,16 @@
+package db // TODO figure out a better name
+
+import (
+	"database/sql"
+	"log"
+
+	"pomodo/internal/database"
+)
+
+func GetDBQueries() *database.Queries {
+	db, err := sql.Open("sqlite3", "./tasks.db")
+	if err != nil {
+		log.Fatalf("Error getting DB Queries: %v", err)
+	}
+	return database.New(db)
+}
