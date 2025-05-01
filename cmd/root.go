@@ -22,15 +22,14 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"bufio"
 	"fmt"
 	"os"
-	"time"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"pomodo/ui"
+	"pomodo/bubbletea"
 )
 
 var cfgFile string
@@ -42,17 +41,10 @@ var rootCmd = &cobra.Command{
 	Long: `Pomodo is a CLI application that keeps things deceptively simple.
 It has many powerful futures that are totally optional.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		t := ui.Timer{
-			Duration: time.Second * 3,
-		}
-		t.Start()
-
-		for {
-			scanner := bufio.NewScanner(os.Stdin)
-			scanner.Scan()
-			if viper.GetBool("isDebugMode") {
-				fmt.Printf("[DEBUG] Received input: %v\n", scanner.Text())
-			}
+		p := tea.NewProgram(bubbletea.InitialHomeModel())
+		if _, err := p.Run(); err != nil {
+			fmt.Printf("Alas, there's been an error: %v", err)
+			os.Exit(1)
 		}
 	},
 }
@@ -68,16 +60,7 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.pomodo.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 // initConfig reads in config file and ENV variables if set.

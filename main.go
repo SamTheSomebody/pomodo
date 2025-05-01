@@ -21,7 +21,9 @@ THE SOFTWARE.
 */
 package main
 
-import "pomodo/cmd"
+import (
+	"pomodo/cmd"
+)
 
 func main() {
 	cmd.Execute()
