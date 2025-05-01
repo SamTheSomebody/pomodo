@@ -1,4 +1,4 @@
-package main
+package ui
 
 import (
 	"bufio"
@@ -7,14 +7,13 @@ import (
 	"os"
 	"time"
 
-	"pomodo/ui"
+	"github.com/spf13/viper"
 )
 
-type timer struct {
+type Timer struct {
 	Duration      time.Duration
 	Remaining     time.Duration
 	Ticker        *time.Ticker
-	State         *state
 	Done          chan (bool)
 	Command       chan (byte)
 	IsRunning     bool
@@ -23,14 +22,14 @@ type timer struct {
 
 const helpString = "('p': Pause, 'r': Restart, s': Stop, 'd': Done)"
 
-func (t *timer) initialze() {
+func (t *Timer) initialze() {
 	t.IsInitialized = true
 	t.Remaining = t.Duration
 	t.Done = make(chan bool, 1)
 	t.Command = make(chan byte, 1)
 }
 
-func (t *timer) start() {
+func (t *Timer) Start() {
 	if !t.IsInitialized {
 		t.initialze()
 	}
@@ -38,45 +37,45 @@ func (t *timer) start() {
 	t.IsRunning = true
 	t.Ticker = time.NewTicker(time.Second)
 
-	err := t.State.CLI.MakeRaw()
+	/*err := t.State.CLI.MakeRaw()
 	if err != nil {
 		log.Fatal(err)
-	}
+	}*/
 
 	t.basicTickFunction()
 }
 
-func (t *timer) pause() error {
+func (t *Timer) Pause() error {
 	if t.Ticker == nil {
-		return fmt.Errorf("timer hasn't been started")
+		return fmt.Errorf("Timer hasn't been started")
 	}
 	t.IsRunning = false
 	t.generatePausedString()
-	err := t.State.CLI.Restore()
+	/*err := t.State.CLI.Restore()
 	if err != nil {
 		return err
-	}
+	}*/
 	t.Ticker.Stop()
 	return nil
 }
 
-func (t *timer) stop() error {
-	err := t.pause()
+func (t *Timer) Stop() error {
+	err := t.Pause()
 	if err != nil {
 		return err
 	}
 
 	t.generateFinishedString()
 
-	err = t.State.CLI.Notify()
+	/*err = t.State.CLI.Notify()
 	if err != nil {
 		return err
-	}
+	}*/
 
 	return nil
 }
 
-func (t *timer) basicTickFunction() {
+func (t *Timer) basicTickFunction() {
 	t.generateTimerString()
 	go t.waitForInput()
 	for {
@@ -84,18 +83,18 @@ func (t *timer) basicTickFunction() {
 		case cmd := <-t.Command:
 			switch cmd {
 			case byte('r'):
-				t.pause()
+				t.Pause()
 				t.initialze()
-				t.start()
+				t.Start()
 			case byte('p'):
-				t.pause()
+				t.Pause()
 			case byte('s'):
-				t.stop()
+				t.Stop()
 			case byte('d'):
-				t.stop()
+				t.Stop()
 			}
 		case <-t.Done:
-			err := t.stop()
+			err := t.Stop()
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -110,11 +109,11 @@ func (t *timer) basicTickFunction() {
 	}
 }
 
-func (t *timer) waitForInput() {
+func (t *Timer) waitForInput() {
 	// TODO Add cancellation token
 	reader := bufio.NewReader(os.Stdin)
 	for {
-		select {}
+		// select {}
 		b, err := reader.ReadByte()
 		if err != nil {
 			log.Fatal(err)
@@ -123,23 +122,26 @@ func (t *timer) waitForInput() {
 	}
 }
 
-func (t *timer) generateTimerString() {
+func (t *Timer) generateTimerString() {
 	output := "Remaining: "
 	output += t.Remaining.String() + " "
-	output += ui.GenerateProgressBar(float32(t.Duration-t.Remaining), float32(t.Duration), t.State.Settings.Timer.ProgressBar)
-	if t.State.Settings.Timer.IsHelpVisible {
+	output += GenerateProgressBar(float32(t.Duration-t.Remaining), float32(t.Duration))
+	if viper.GetBool("timer.isHelpVisible") {
 		output += " " + helpString
 	}
-	output += ": "
-	t.State.CLI.RewriteLine(output)
+	// output += ": "
+	fmt.Println(output)
+	// t.State.CLI.RewriteLine(output)
 }
 
-func (t *timer) generatePausedString() {
-	output := fmt.Sprintf("[Paused] (%v) %v", t.Duration, ui.GenerateProgressBar(float32(t.Duration-t.Remaining), float32(t.Duration), t.State.Settings.Timer.ProgressBar))
-	t.State.CLI.RewriteLine(output)
+func (t *Timer) generatePausedString() {
+	output := fmt.Sprintf("[Paused] (%v) %v", t.Duration, GenerateProgressBar(float32(t.Duration-t.Remaining), float32(t.Duration)))
+	fmt.Println(output)
+	// t.State.CLI.RewriteLine(output)
 }
 
-func (t *timer) generateFinishedString() {
-	output := fmt.Sprintf("Done! (%v) %v\n", t.Duration, ui.GenerateProgressBar(1.0, 1.0, t.State.Settings.Timer.ProgressBar))
-	t.State.CLI.RewriteLine(output)
+func (t *Timer) generateFinishedString() {
+	output := fmt.Sprintf("Done! (%v) %v\n", t.Duration, GenerateProgressBar(1.0, 1.0))
+	fmt.Println(output)
+	// t.State.CLI.RewriteLine(output)
 }

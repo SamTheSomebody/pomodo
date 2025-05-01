@@ -4,12 +4,13 @@ CREATE TABLE tasks (
   created_at TIMESTAMP NOT NULL,
   updated_at TIMESTAMP NOT NULL,
   name TEXT NOT NULL,
-  description TEXT,
+  summary TEXT,
   due_at TIMESTAMP,
   time_estimate_seconds INTEGER,
   time_spent_seconds INTEGER DEFAULT 0,
   priority INTEGER,
   enthusiasm INTEGER
+  is_complete BOOLEAN
   -- user_id UUID REFERENCES users(id) ON DELETE CASCADE
 );
 

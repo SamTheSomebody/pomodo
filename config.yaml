@@ -1,0 +1,8 @@
+timer:
+  isHelpVisible : true
+progressbar:
+  isVisible: true
+  isDecreasing: false
+  size: 10
+  fillSegment: "◼"
+  emptySegment: "◻"
