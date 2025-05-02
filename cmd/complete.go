@@ -8,7 +8,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	db "pomodo/database"
 	"pomodo/helpers"
 	"pomodo/ui"
 )
@@ -18,7 +17,7 @@ var completeCmd = &cobra.Command{
 	Use:   "complete",
 	Short: "Mark a task as completed",
 	Run: func(cmd *cobra.Command, args []string) {
-		db := db.GetDBQueries()
+		db := helpers.GetDBQueries()
 		id := helpers.GetTask(cmd.Context(), args[0]).ID
 		task, err := db.CompleteTask(cmd.Context(), id)
 		if err != nil {

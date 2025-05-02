@@ -1,4 +1,4 @@
-package bubbletea
+package pages
 
 import (
 	"fmt"

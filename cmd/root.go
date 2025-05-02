@@ -29,10 +29,15 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"pomodo/bubbletea"
+	"pomodo/bubbletea/pages"
+	"pomodo/helpers"
+	"pomodo/internal/database"
 )
 
-var cfgFile string
+var (
+	cfgFile string
+	task    helpers.RawTask
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -41,7 +46,7 @@ var rootCmd = &cobra.Command{
 	Long: `Pomodo is a CLI application that keeps things deceptively simple.
 It has many powerful futures that are totally optional.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		p := tea.NewProgram(bubbletea.InitialHomeModel())
+		p := tea.NewProgram(pages.InitialEditTaskModel(database.Task{}))
 		if _, err := p.Run(); err != nil {
 			fmt.Printf("Alas, there's been an error: %v", err)
 			os.Exit(1)

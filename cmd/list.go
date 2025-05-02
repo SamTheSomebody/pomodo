@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	db "pomodo/database"
+	"pomodo/helpers"
 	"pomodo/ui"
 )
 
@@ -18,7 +18,7 @@ var listCmd = &cobra.Command{
 	Short: "List all tasks",
 	Long:  `List all of your tasks!`,
 	Run: func(cmd *cobra.Command, args []string) {
-		db := db.GetDBQueries()
+		db := helpers.GetDBQueries()
 		tasks, err := db.GetTasks(cmd.Context())
 		if err != nil {
 			log.Fatal(err)

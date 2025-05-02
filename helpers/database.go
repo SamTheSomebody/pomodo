@@ -1,4 +1,4 @@
-package db // TODO figure out a better name
+package helpers
 
 import (
 	"database/sql"
