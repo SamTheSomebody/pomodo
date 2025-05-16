@@ -8,6 +8,8 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
+	"pomodo/internal/database"
 )
 
 var (
@@ -21,7 +23,7 @@ var (
 
 type item string
 
-func (i item) FilterValue() string { return "" }
+func (i item) FilterValue() string
 
 type itemDelegate struct{}
 
@@ -84,10 +86,19 @@ func (m homeModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m homeModel) View() string {
 	if m.choice != "" {
+		switch m.choice {
+		case "Start Timer":
+			// TODO goto timer page
+		case "View Tasks":
+			// TODO goto tasks page
+		case "Add Task":
+			// TODO how to return a page?
+			InitialEditTaskModel(database.Task{})
+		}
 		return quitTextStyle.Render(fmt.Sprintf("%s? Sounds good to me.", m.choice))
 	}
 	if m.quitting {
-		return quitTextStyle.Render("Byeeeee!")
+		return quitTextStyle.Render("Bye!")
 	}
 	return "\n" + m.list.View()
 }

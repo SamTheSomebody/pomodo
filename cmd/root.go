@@ -31,7 +31,6 @@ import (
 
 	"pomodo/bubbletea/pages"
 	"pomodo/helpers"
-	"pomodo/internal/database"
 )
 
 var (
@@ -46,7 +45,7 @@ var rootCmd = &cobra.Command{
 	Long: `Pomodo is a CLI application that keeps things deceptively simple.
 It has many powerful futures that are totally optional.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		p := tea.NewProgram(pages.InitialEditTaskModel(database.Task{}))
+		p := tea.NewProgram(pages.InitialHomeModel())
 		if _, err := p.Run(); err != nil {
 			fmt.Printf("Alas, there's been an error: %v", err)
 			os.Exit(1)
