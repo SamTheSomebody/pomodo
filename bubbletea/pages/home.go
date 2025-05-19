@@ -23,7 +23,9 @@ var (
 
 type item string
 
-func (i item) FilterValue() string
+func (i item) FilterValue() string {
+	return ""
+}
 
 type itemDelegate struct{}
 
@@ -58,6 +60,7 @@ func (m homeModel) Init() tea.Cmd {
 	return nil
 }
 
+// TODO add ctrl+c as a universal command
 func (m homeModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -74,6 +77,14 @@ func (m homeModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			i, ok := m.list.SelectedItem().(item)
 			if ok {
 				m.choice = string(i)
+				switch m.choice {
+				case "Start Timer":
+					return InitialConfigureTimerModel(), nil
+				case "View Tasks":
+					// TODO goto tasks page
+				case "Add Task":
+					return InitialEditTaskModel(database.Task{}), nil
+				}
 			}
 			return m, tea.Quit
 		}
@@ -85,22 +96,11 @@ func (m homeModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m homeModel) View() string {
-	if m.choice != "" {
-		switch m.choice {
-		case "Start Timer":
-			// TODO goto timer page
-		case "View Tasks":
-			// TODO goto tasks page
-		case "Add Task":
-			// TODO how to return a page?
-			InitialEditTaskModel(database.Task{})
-		}
-		return quitTextStyle.Render(fmt.Sprintf("%s? Sounds good to me.", m.choice))
-	}
 	if m.quitting {
 		return quitTextStyle.Render("Bye!")
 	}
 	return "\n" + m.list.View()
+	// TODO add help display
 }
 
 func InitialHomeModel() homeModel {

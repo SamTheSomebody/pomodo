@@ -22,12 +22,10 @@ THE SOFTWARE.
 package main
 
 import (
-	"fmt"
-
 	"pomodo/cmd"
 )
 
 func main() {
-	fmt.Println("Launching pomodo!")
+	// fmt.Println("Launching pomodo!")
 	cmd.Execute()
 }

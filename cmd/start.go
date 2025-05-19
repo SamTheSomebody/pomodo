@@ -20,4 +20,7 @@ var startCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(startCmd)
+	// TODO background flag
+	// TODO time flag - goes directly to timer
+	// TODO no time flag - goes to start page
 }
