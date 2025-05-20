@@ -2,6 +2,7 @@ package pages
 
 import (
 	"fmt"
+	"pomodo/bubbletea"
 	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -15,11 +16,12 @@ How long is the timer? : (ID)
 */
 
 type configureTimerModel struct {
+	nav *bubbletea.Navigation
 	input textinput.Model
 	err   error
 }
 
-func InitialConfigureTimerModel() configureTimerModel {
+func InitialConfigureTimerModel(nav *bubbletea.Navigation) configureTimerModel {
 	m := configureTimerModel{}
 	m.input = textinput.New()
 	m.input.Placeholder = "XXh XXm XXs"
@@ -27,6 +29,8 @@ func InitialConfigureTimerModel() configureTimerModel {
 	m.input.Prompt = ""
 	m.input.Width = 50
 	m.input.Focus()
+	m.nav = nav
+	nav.Add(m)
 	return m
 }
 
@@ -39,14 +43,14 @@ func (m configureTimerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEsc:
-			return InitialHomeModel(), nil
+			return m.nav.Back()
 		case tea.KeyEnter:
 			d, err := time.ParseDuration(m.input.Value())
 			if err != nil {
 				m.err = err
 				return m, nil
 			}
-			return InitialTimerModel(d), nil
+			return InitialTimerModel(m.nav, d), nil
 		}
 	}
 	m.input, _ = m.input.Update(msg)
@@ -54,10 +58,10 @@ func (m configureTimerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m configureTimerModel) View() string {
-	s := "How long is the timer?\n"
-	s += fmt.Sprintf("  %s\n", m.input.View())
+	s := "\n" + padding + "How long is the timer?" + "\n"
+	s += fmt.Sprint(padding, m.input.View(), "\n")
 	if m.err != nil {
-		s += fmt.Sprintf("Error! %v", m.err)
+		s += fmt.Sprint(padding, "Error! ", m.err)
 	}
 	s += "\n"
 	return s

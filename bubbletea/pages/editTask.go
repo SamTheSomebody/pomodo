@@ -3,12 +3,12 @@ package pages
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/google/uuid"
 
+	"pomodo/bubbletea"
 	"pomodo/helpers"
 	"pomodo/internal/database"
 )
@@ -25,6 +25,7 @@ Editing task: (ID)
 */
 
 type editTaskModel struct {
+	nav *bubbletea.Navigation
 	task         helpers.RawTask
 	inputs       []textinput.Model
 	focus        int
@@ -32,7 +33,7 @@ type editTaskModel struct {
 	hasTask      bool
 }
 
-func InitialEditTaskModel(task database.Task) editTaskModel {
+func InitialEditTaskModel(nav *bubbletea.Navigation, task database.Task) editTaskModel {
 	hasTask := task.ID != nil
 	if !hasTask {
 		task.ID = uuid.New()
@@ -61,7 +62,8 @@ func InitialEditTaskModel(task database.Task) editTaskModel {
 	}
 
 	m.inputs[0].Focus()
-
+	m.nav = nav
+	nav.Add(m)
 	return m
 }
 
@@ -74,7 +76,7 @@ func (m editTaskModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEsc:
-			m.isCancelling = true
+			return m.nav.Back()
 		case tea.KeyShiftTab:
 			m.AdjustFocus(-1)
 			return m, nil
@@ -99,7 +101,7 @@ func (m editTaskModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if err != nil {
 					log.Fatalf("SQL instertion error: %v", err)
 				}
-				os.Exit(0)
+				return m.nav.Back()
 			}
 			m.AdjustFocus(1)
 			return m, nil

@@ -29,6 +29,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"pomodo/bubbletea"
 	"pomodo/bubbletea/pages"
 	"pomodo/helpers"
 )
@@ -45,7 +46,8 @@ var rootCmd = &cobra.Command{
 	Long: `Pomodo is a CLI application that keeps things deceptively simple.
 It has many powerful futures that are totally optional.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		p := tea.NewProgram(pages.InitialHomeModel())
+		nav := bubbletea.NewNavigation()
+		p := tea.NewProgram(pages.InitialHomeModel(nav), tea.WithAltScreen())
 		if _, err := p.Run(); err != nil {
 			fmt.Printf("Alas, there's been an error: %v", err)
 			os.Exit(1)

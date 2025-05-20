@@ -9,6 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"pomodo/bubbletea"
 	"pomodo/internal/database"
 )
 
@@ -51,6 +52,7 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 }
 
 type homeModel struct {
+	nav      *bubbletea.Navigation
 	list     list.Model
 	choice   string
 	quitting bool
@@ -79,11 +81,11 @@ func (m homeModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.choice = string(i)
 				switch m.choice {
 				case "Start Timer":
-					return InitialConfigureTimerModel(), nil
+					return InitialConfigureTimerModel(m.nav), nil //TODO add to state history
 				case "View Tasks":
 					// TODO goto tasks page
 				case "Add Task":
-					return InitialEditTaskModel(database.Task{}), nil
+					return InitialEditTaskModel(m.nav, database.Task{}), nil
 				}
 			}
 			return m, tea.Quit
@@ -103,7 +105,7 @@ func (m homeModel) View() string {
 	// TODO add help display
 }
 
-func InitialHomeModel() homeModel {
+func InitialHomeModel(nav *bubbletea.Navigation) homeModel {
 	items := []list.Item{
 		item("Start Timer"),
 		item("View Tasks"),
@@ -118,5 +120,8 @@ func InitialHomeModel() homeModel {
 	l.Styles.PaginationStyle = paginationStyle
 	l.Styles.HelpStyle = helpStyle
 
-	return homeModel{list: l}
+	m := homeModel{list: l}
+	m.nav = nav
+	nav.Add(m)
+	return m
 }
