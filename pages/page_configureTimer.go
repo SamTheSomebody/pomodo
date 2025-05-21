@@ -2,26 +2,19 @@ package pages
 
 import (
 	"fmt"
-	"pomodo/bubbletea"
 	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-/* Visual
-(Error)
-How long is the timer? : (ID)
-  XXh XXm XXs
-*/
-
 type configureTimerModel struct {
-	nav *bubbletea.Navigation
+	state *State
 	input textinput.Model
 	err   error
 }
 
-func InitialConfigureTimerModel(nav *bubbletea.Navigation) configureTimerModel {
+func InitialConfigureTimerModel(s *State) configureTimerModel {
 	m := configureTimerModel{}
 	m.input = textinput.New()
 	m.input.Placeholder = "XXh XXm XXs"
@@ -29,8 +22,8 @@ func InitialConfigureTimerModel(nav *bubbletea.Navigation) configureTimerModel {
 	m.input.Prompt = ""
 	m.input.Width = 50
 	m.input.Focus()
-	m.nav = nav
-	nav.Add(m)
+	m.state = s
+	s.Navigation.Add(m)
 	return m
 }
 
@@ -39,18 +32,22 @@ func (m configureTimerModel) Init() tea.Cmd {
 }
 
 func (m configureTimerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if mod, cmd := m.state.ProcessUniversalKeys(msg); mod != nil || cmd != nil {
+		return mod, cmd
+	}
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEsc:
-			return m.nav.Back()
+			return m.state.Navigation.Back()
 		case tea.KeyEnter:
 			d, err := time.ParseDuration(m.input.Value())
 			if err != nil {
 				m.err = err
 				return m, nil
 			}
-			return InitialTimerModel(m.nav, d), nil
+			return InitialTimerModel(m.state, d), nil
 		}
 	}
 	m.input, _ = m.input.Update(msg)
@@ -58,11 +55,11 @@ func (m configureTimerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m configureTimerModel) View() string {
-	s := "\n" + padding + "How long is the timer?" + "\n"
+	s := header + padding + "How long is the timer?" + "\n"
 	s += fmt.Sprint(padding, m.input.View(), "\n")
 	if m.err != nil {
-		s += fmt.Sprint(padding, "Error! ", m.err)
+		s += fmt.Sprint(padding, "Error! ", m.err, "\n")
 	}
-	s += "\n"
+	m.state.HelpView()
 	return s
 }

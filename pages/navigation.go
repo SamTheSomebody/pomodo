@@ -1,6 +1,8 @@
-package bubbletea
+package pages
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+)
 
 type Navigation struct {
 	History []tea.Model
@@ -22,6 +24,9 @@ func (s *Navigation) Back() (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (s *Navigation) Add(m tea.Model) { //If model is home, clear history?
+func (s *Navigation) Add(m tea.Model) {
+	if _, ok := m.(homeModel); ok {
+		s.History = s.History[:0]
+	}
 	s.History = append(s.History, m)
 }

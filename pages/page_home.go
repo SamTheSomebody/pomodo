@@ -3,14 +3,12 @@ package pages
 import (
 	"fmt"
 	"io"
+	"pomodo/internal/database"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-
-	"pomodo/bubbletea"
-	"pomodo/internal/database"
 )
 
 var (
@@ -52,44 +50,47 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 }
 
 type homeModel struct {
-	nav      *bubbletea.Navigation
-	list     list.Model
-	choice   string
-	quitting bool
+	state  *State
+	list   list.Model
+	choice string
 }
 
 func (m homeModel) Init() tea.Cmd {
 	return nil
 }
 
-// TODO add ctrl+c as a universal command
 func (m homeModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.list.SetWidth(msg.Width)
 		return m, nil
-
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
-		case "q", "ctrl+c":
-			m.quitting = true
-			return m, tea.Quit
-
 		case "enter":
 			i, ok := m.list.SelectedItem().(item)
 			if ok {
 				m.choice = string(i)
 				switch m.choice {
 				case "Start Timer":
-					return InitialConfigureTimerModel(m.nav), nil //TODO add to state history
+					mod := InitialConfigureTimerModel(m.state)
+					m.state.Navigation.Add(mod)
+					return mod, nil
 				case "View Tasks":
-					// TODO goto tasks page
+					mod := InitialViewTasksModel(m.state)
+					m.state.Navigation.Add(mod)
+					return mod, nil
 				case "Add Task":
-					return InitialEditTaskModel(m.nav, database.Task{}), nil
+					mod := InitialEditTaskModel(m.state, database.Task{})
+					m.state.Navigation.Add(mod)
+					return mod, nil
 				}
 			}
 			return m, tea.Quit
 		}
+	}
+
+	if mod, cmd := m.state.ProcessUniversalKeys(msg); mod != nil || cmd != nil {
+		return mod, cmd
 	}
 
 	var cmd tea.Cmd
@@ -98,14 +99,12 @@ func (m homeModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m homeModel) View() string {
-	if m.quitting {
-		return quitTextStyle.Render("Bye!")
-	}
-	return "\n" + m.list.View()
-	// TODO add help display
+	s := header + padding + m.list.View()
+	s += m.state.HelpView()
+	return s
 }
 
-func InitialHomeModel(nav *bubbletea.Navigation) homeModel {
+func InitialHomeModel(s *State) homeModel {
 	items := []list.Item{
 		item("Start Timer"),
 		item("View Tasks"),
@@ -121,7 +120,7 @@ func InitialHomeModel(nav *bubbletea.Navigation) homeModel {
 	l.Styles.HelpStyle = helpStyle
 
 	m := homeModel{list: l}
-	m.nav = nav
-	nav.Add(m)
+	m.state = s
+	s.Navigation.Add(m)
 	return m
 }

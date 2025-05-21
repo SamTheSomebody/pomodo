@@ -3,14 +3,12 @@ package pages
 import (
 	"fmt"
 	"log"
+	"pomodo/helpers"
+	"pomodo/internal/database"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/google/uuid"
-
-	"pomodo/bubbletea"
-	"pomodo/helpers"
-	"pomodo/internal/database"
 )
 
 /* Visual
@@ -25,7 +23,7 @@ Editing task: (ID)
 */
 
 type editTaskModel struct {
-	nav *bubbletea.Navigation
+	state        *State
 	task         helpers.RawTask
 	inputs       []textinput.Model
 	focus        int
@@ -33,7 +31,7 @@ type editTaskModel struct {
 	hasTask      bool
 }
 
-func InitialEditTaskModel(nav *bubbletea.Navigation, task database.Task) editTaskModel {
+func InitialEditTaskModel(s *State, task database.Task) editTaskModel {
 	hasTask := task.ID != nil
 	if !hasTask {
 		task.ID = uuid.New()
@@ -62,8 +60,8 @@ func InitialEditTaskModel(nav *bubbletea.Navigation, task database.Task) editTas
 	}
 
 	m.inputs[0].Focus()
-	m.nav = nav
-	nav.Add(m)
+	m.state = s
+	m.state.Navigation.Add(m)
 	return m
 }
 
@@ -76,7 +74,7 @@ func (m editTaskModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEsc:
-			return m.nav.Back()
+			return m.state.Navigation.Back()
 		case tea.KeyShiftTab:
 			m.AdjustFocus(-1)
 			return m, nil
@@ -101,12 +99,17 @@ func (m editTaskModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if err != nil {
 					log.Fatalf("SQL instertion error: %v", err)
 				}
-				return m.nav.Back()
+				return m.state.Navigation.Back()
 			}
 			m.AdjustFocus(1)
 			return m, nil
 		}
 	}
+
+	if mod, cmd := m.state.ProcessUniversalKeys(msg); mod != nil || cmd != nil {
+		return mod, cmd
+	}
+
 	m.inputs[m.focus], _ = m.inputs[m.focus].Update(msg)
 	return m, nil
 }
@@ -127,20 +130,20 @@ func (m editTaskModel) View() string {
 		return "Cancelled"
 	}
 
-	s := ""
+	s := header
 	if m.hasTask {
 		s += "Editing"
 	} else {
 		s += "Adding"
 	}
 	s += fmt.Sprintf(" task (%v)\n\n", m.task.ID)
-	s += fmt.Sprintf("    Name:          %s\n", m.inputs[0].View())
-	s += fmt.Sprintf("    Summary:       %s\n", m.inputs[1].View())
-	s += fmt.Sprintf("    Due At:        %s\n", m.inputs[2].View())
-	s += fmt.Sprintf("    Time Estimate: %s\n", m.inputs[3].View())
-	s += fmt.Sprintf("    Time Spent:    %s\n", m.inputs[4].View())
-	s += fmt.Sprintf("    Priority:      %s\n", m.inputs[5].View())
-	s += fmt.Sprintf("    Enthusiasm:    %s\n", m.inputs[6].View())
-
+	s += fmt.Sprintln(padding, padding, "Name:          ", m.inputs[0].View())
+	s += fmt.Sprintln(padding, padding, "Summary:       ", m.inputs[1].View())
+	s += fmt.Sprintln(padding, padding, "Due At:        ", m.inputs[2].View())
+	s += fmt.Sprintln(padding, padding, "Time Estimate: ", m.inputs[3].View())
+	s += fmt.Sprintln(padding, padding, "Time Spent:    ", m.inputs[4].View())
+	s += fmt.Sprintln(padding, padding, "Priority:      ", m.inputs[5].View())
+	s += fmt.Sprint(padding, padding, "Enthusiasm:    ", m.inputs[6].View())
+	s += m.state.HelpView()
 	return s
 }

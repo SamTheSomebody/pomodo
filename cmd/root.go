@@ -24,14 +24,12 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"pomodo/helpers"
+	"pomodo/pages"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"pomodo/bubbletea"
-	"pomodo/bubbletea/pages"
-	"pomodo/helpers"
 )
 
 var (
@@ -46,8 +44,8 @@ var rootCmd = &cobra.Command{
 	Long: `Pomodo is a CLI application that keeps things deceptively simple.
 It has many powerful futures that are totally optional.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		nav := bubbletea.NewNavigation()
-		p := tea.NewProgram(pages.InitialHomeModel(nav), tea.WithAltScreen())
+		s := pages.NewState()
+		p := tea.NewProgram(pages.InitialHomeModel(s), tea.WithAltScreen())
 		if _, err := p.Run(); err != nil {
 			fmt.Printf("Alas, there's been an error: %v", err)
 			os.Exit(1)

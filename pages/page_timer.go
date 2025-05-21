@@ -2,31 +2,27 @@ package pages
 
 import (
 	"fmt"
-	"pomodo/bubbletea"
 	"time"
 
-	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
 )
+
 type timerModel struct {
-	nav *bubbletea.Navigation
+	state         *State
+	keymap        timerKeyMap
 	timerModel    timer.Model
 	progressModel progress.Model
 	progress      float64
 	timeout       time.Duration
-	keymap        keymap
-	help          help.Model
 }
 
-type keymap struct {
+type timerKeyMap struct {
 	start key.Binding
 	stop  key.Binding
 	reset key.Binding
-	back  key.Binding
-	enter key.Binding
 }
 
 func (m timerModel) Init() tea.Cmd {
@@ -34,6 +30,10 @@ func (m timerModel) Init() tea.Cmd {
 }
 
 func (m timerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if mod, cmd := m.state.ProcessUniversalKeys(msg); mod != nil || cmd != nil {
+		return mod, cmd
+	}
+
 	switch msg := msg.(type) {
 	case timer.TickMsg:
 		if !m.timerModel.Timedout() {
@@ -54,32 +54,22 @@ func (m timerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.keymap.start.SetEnabled(!m.timerModel.Running())
 		return m, cmd
 	case timer.TimeoutMsg:
-		m.keymap.enter.SetEnabled(true)
+		m.state.Keys.Enter.SetEnabled(true)
 		return m, nil
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, m.keymap.back):
-			return m.nav.Back()
+		case key.Matches(msg, m.state.Keys.Back):
+			return m.state.Navigation.Back()
 		case key.Matches(msg, m.keymap.reset):
 			m.timerModel.Timeout = m.timeout
 			m.timerModel.Start()
 		case key.Matches(msg, m.keymap.start, m.keymap.stop):
 			return m, m.timerModel.Toggle()
-		case key.Matches(msg, m.keymap.enter):
-			return InitialHomeModel(m.nav), nil // TODO add time to task
+		case key.Matches(msg, m.state.Keys.Enter):
+			return InitialHomeModel(m.state), nil // TODO add time to task
 		}
 	}
 	return m, nil
-}
-
-func (m timerModel) helpView() string {
-	return "\n" + padding + m.help.ShortHelpView([]key.Binding{
-		m.keymap.start,
-		m.keymap.stop,
-		m.keymap.reset,
-		m.keymap.back,
-		m.keymap.enter,
-	})
 }
 
 func (m timerModel) View() string {
@@ -89,18 +79,15 @@ func (m timerModel) View() string {
 	if m.timerModel.Timedout() {
 		s = "\n" + padding + "Finished!\n"
 	}
-	s += m.helpView()
+	b := []key.Binding{m.keymap.reset, m.keymap.start, m.keymap.stop}
+	s += m.state.HelpView(b...)
 	return s
 }
 
 // TODO For some reason this doesn't start when initialized, and runs twice as fast when first manually started
-func InitialTimerModel(nav *bubbletea.Navigation, duration time.Duration) timerModel {
+func InitialTimerModel(s *State, duration time.Duration) timerModel {
 	m := timerModel{
-		timerModel:    timer.New(duration),
-		progressModel: progress.New(),
-		progress:      0,
-		timeout:       duration,
-		keymap: keymap{
+		keymap: timerKeyMap{
 			start: key.NewBinding(
 				key.WithKeys("s"),
 				key.WithHelp("s", "start"),
@@ -114,19 +101,13 @@ func InitialTimerModel(nav *bubbletea.Navigation, duration time.Duration) timerM
 				key.WithKeys("r"),
 				key.WithHelp("r", "reset"),
 			),
-			back: key.NewBinding(
-				key.WithKeys("b"),
-				key.WithHelp("b", "back"),
-			),
-			enter: key.NewBinding(
-				key.WithKeys("enter"),
-				key.WithHelp("enter", "continue"),
-				key.WithDisabled(),
-			),
 		},
-		help: help.New(),
-		nav: nav,
+		timerModel:    timer.New(duration),
+		progressModel: progress.New(),
+		progress:      0,
+		timeout:       duration,
+		state:         s,
 	}
-	nav.Add(m)
+	s.Navigation.Add(m)
 	return m
 }
