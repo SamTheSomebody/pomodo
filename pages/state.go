@@ -28,7 +28,7 @@ func (s *State) HelpView(keys ...key.Binding) string {
 		s.Keys.Enter,
 	}
 	b = append(b, keys...)
-	return "\n" + padding + s.Help.ShortHelpView(b)
+	return "\n\n" + padding + s.Help.ShortHelpView(b)
 }
 
 func (s *State) ProcessUniversalKeys(msg tea.Msg) (tea.Model, tea.Cmd) {

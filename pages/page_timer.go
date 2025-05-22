@@ -1,16 +1,21 @@
 package pages
 
 import (
+	"context"
 	"fmt"
+	"log"
+	"pomodo/helpers"
 	"time"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/google/uuid"
 )
 
 type timerModel struct {
+	task          tea.Model
 	state         *State
 	keymap        timerKeyMap
 	timerModel    timer.Model
@@ -73,7 +78,11 @@ func (m timerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m timerModel) View() string {
-	s := fmt.Sprint("\n", padding, m.timerModel.Timeout)
+	s := ""
+	if m.task != nil {
+		s += m.task.View()
+	}
+	s += fmt.Sprint("\n", padding, m.timerModel.Timeout)
 	s += fmt.Sprint(padding, m.progressModel.ViewAs(m.progress), "\n")
 
 	if m.timerModel.Timedout() {
@@ -85,8 +94,19 @@ func (m timerModel) View() string {
 }
 
 // TODO For some reason this doesn't start when initialized, and runs twice as fast when first manually started
-func InitialTimerModel(s *State, duration time.Duration) timerModel {
+func InitialTimerModel(s *State, duration time.Duration, taskID *uuid.UUID) timerModel {
+	var task tea.Model
+	if taskID != nil {
+		t, err := helpers.GetDBQueries().GetTaskByID(context.TODO(), taskID)
+		if err != nil {
+			log.Fatal(err)
+		}
+		rawTask := helpers.Raw(t)
+		task = InitialTaskModel(&rawTask)
+	}
+
 	m := timerModel{
+		task: task,
 		keymap: timerKeyMap{
 			start: key.NewBinding(
 				key.WithKeys("s"),

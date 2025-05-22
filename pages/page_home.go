@@ -72,17 +72,11 @@ func (m homeModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.choice = string(i)
 				switch m.choice {
 				case "Start Timer":
-					mod := InitialConfigureTimerModel(m.state)
-					m.state.Navigation.Add(mod)
-					return mod, nil
+					return InitialConfigureTimerModel(m.state, nil), nil
 				case "View Tasks":
-					mod := InitialViewTasksModel(m.state)
-					m.state.Navigation.Add(mod)
-					return mod, nil
+					return InitialViewTasksModel(m.state), nil
 				case "Add Task":
-					mod := InitialEditTaskModel(m.state, database.Task{})
-					m.state.Navigation.Add(mod)
-					return mod, nil
+					return InitialEditTaskModel(m.state, database.Task{}), nil
 				}
 			}
 			return m, tea.Quit
