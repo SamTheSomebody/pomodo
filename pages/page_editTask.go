@@ -5,6 +5,7 @@ import (
 	"log"
 	"pomodo/helpers"
 	"pomodo/internal/database"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -116,7 +117,7 @@ func (m editTaskModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *editTaskModel) AdjustFocus(amount int) {
 	m.inputs[m.focus].Blur()
-	m.focus += amount
+	m.focus = amount
 	if m.focus < 0 {
 		m.focus = 0
 	} else if m.focus >= len(m.inputs) {
@@ -130,20 +131,19 @@ func (m editTaskModel) View() string {
 		return "Cancelled"
 	}
 
-	s := header
+	b := strings.Builder{}
 	if m.hasTask {
-		s += "Editing"
+		b.WriteString("Editing")
 	} else {
-		s += "Adding"
+		b.WriteString("Adding")
 	}
-	s += fmt.Sprintf(" task (%v)\n\n", m.task.ID)
-	s += fmt.Sprintln(padding, padding, "Name:          ", m.inputs[0].View())
-	s += fmt.Sprintln(padding, padding, "Summary:       ", m.inputs[1].View())
-	s += fmt.Sprintln(padding, padding, "Due At:        ", m.inputs[2].View())
-	s += fmt.Sprintln(padding, padding, "Time Estimate: ", m.inputs[3].View())
-	s += fmt.Sprintln(padding, padding, "Time Spent:    ", m.inputs[4].View())
-	s += fmt.Sprintln(padding, padding, "Priority:      ", m.inputs[5].View())
-	s += fmt.Sprint(padding, padding, "Enthusiasm:    ", m.inputs[6].View())
-	s += m.state.HelpView()
-	return s
+	b.WriteString(fmt.Sprintf(" task (%v)\n\n", m.task.ID))
+	b.WriteString("Name:          " + m.inputs[0].View() + "\n")
+	b.WriteString("Summary:       " + m.inputs[1].View() + "\n")
+	b.WriteString("Due At:        " + m.inputs[2].View() + "\n")
+	b.WriteString("Time Estimate: " + m.inputs[3].View() + "\n")
+	b.WriteString("Time Spent:    " + m.inputs[4].View() + "\n")
+	b.WriteString("Priority:      " + m.inputs[5].View() + "\n")
+	b.WriteString("Enthusiasm:    " + m.inputs[6].View() + "\n")
+	return m.state.View(b.String())
 }

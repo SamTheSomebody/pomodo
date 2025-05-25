@@ -2,9 +2,9 @@ package pages
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"pomodo/helpers"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -50,7 +50,7 @@ func (m timerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.timerModel, cmd = m.timerModel.Update(msg)
 		return m, cmd
 	case tea.WindowSizeMsg:
-		m.progressModel.Width = min(msg.Width-len(padding)*2-4, maxWidth)
+		m.progressModel.Width = min(msg.Width-padding*2-4, maxWidth)
 		return m, nil
 	case timer.StartStopMsg:
 		var cmd tea.Cmd
@@ -78,19 +78,20 @@ func (m timerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m timerModel) View() string {
-	s := ""
+	b := strings.Builder{}
 	if m.task != nil {
-		s += m.task.View()
+		b.WriteString(m.task.View())
 	}
-	s += fmt.Sprint("\n", padding, m.timerModel.Timeout)
-	s += fmt.Sprint(padding, m.progressModel.ViewAs(m.progress), "\n")
+	b.WriteString(m.timerModel.Timeout.String())
+	b.WriteString(m.progressModel.ViewAs(m.progress) + "\n")
 
 	if m.timerModel.Timedout() {
-		s = "\n" + padding + "Finished!\n"
+		b.Reset()
+		b.WriteString("Finished!")
 	}
-	b := []key.Binding{m.keymap.reset, m.keymap.start, m.keymap.stop}
-	s += m.state.HelpView(b...)
-	return s
+
+	keys := []key.Binding{m.keymap.reset, m.keymap.start, m.keymap.stop}
+	return m.state.View(b.String(), keys...)
 }
 
 // TODO For some reason this doesn't start when initialized, and runs twice as fast when first manually started

@@ -15,7 +15,7 @@ func (m quitModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m quitModel) View() string {
-	return header + padding + "Quitting!"
+	return m.state.View("Quitting!")
 }
 
 func InitialQuitModel(s *State) tea.Model {

@@ -1,7 +1,8 @@
 package pages
 
 import (
-	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -111,14 +112,11 @@ func (m configureTimerModel) setFocus(increment int) (tea.Model, tea.Cmd) {
 }
 
 func (m configureTimerModel) View() string {
-	s := header + padding + "Timer Configuation:" + "\n"
-	s += fmt.Sprint(padding, m.timerInput.View(), "\n")
-	s += fmt.Sprint(padding, m.selectTask.View(), "\n")
-	s += fmt.Sprint(m.button.View(), "\n")
-	if m.err != nil {
-		s += fmt.Sprint(padding, "Error! ", m.err, "\n")
-	}
-	s += fmt.Sprint(padding, "Focus: ", m.focus)
-	m.state.HelpView()
-	return s
+	b := strings.Builder{}
+	b.WriteString("Timer Configuation:" + "\n")
+	b.WriteString(m.timerInput.View() + "\n")
+	b.WriteString(m.selectTask.View() + "\n")
+	b.WriteString(m.button.View() + "\n")
+	b.WriteString("Focus: " + strconv.Itoa(m.focus))
+	return m.state.View(b.String())
 }

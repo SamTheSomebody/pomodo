@@ -7,8 +7,6 @@ import (
 )
 
 /*
-
-
 Name |
 */
 
@@ -30,7 +28,7 @@ func (m viewTasksModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m viewTasksModel) View() string {
-	return ""
+	return m.state.View("")
 }
 
 func InitialViewTasksModel(s *State) tea.Model {

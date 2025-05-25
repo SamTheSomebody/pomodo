@@ -2,7 +2,6 @@ package pages
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type buttonModel struct {
@@ -38,13 +37,10 @@ func (m buttonModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m buttonModel) View() string {
-	style := lipgloss.NewStyle()
-
 	if m.Focused {
-		style = style.Bold(true).Background(lipgloss.Color("12"))
+		return activeButtonStyle.Render(m.Label)
 	}
-
-	return style.Render(m.Label)
+	return buttonStyle.Render(m.Label)
 }
 
 // Public API

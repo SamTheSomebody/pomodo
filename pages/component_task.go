@@ -1,8 +1,8 @@
 package pages
 
 import (
-	"fmt"
 	"pomodo/helpers"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -87,22 +87,23 @@ func (m taskModel) View() string {
 }
 
 func (m taskModel) fullView() string {
-	s := fmt.Sprint(padding, m.task.Name)
-	if !m.hideDueAt {
-		s += " - " + m.task.DueAt
+	b := strings.Builder{}
+	if m.showID {
+		b.WriteString(m.task.ID + "\n")
 	}
-	s += "\n"
+	b.WriteString(m.task.Name + "\n")
+	if !m.hideDueAt {
+		b.WriteString(" - " + m.task.DueAt)
+	}
+	b.WriteString("\n")
 	if !m.hideSummary {
-		s += padding + m.task.Summary + "\n"
+		b.WriteString(m.task.Summary + "\n")
 	}
 	if !m.hideTimes {
-		s += padding + "Est: " + m.task.TimeEstimate + "(" + m.task.TimeSpent + " spent)\n"
+		b.WriteString("Est: " + m.task.TimeEstimate + "(" + m.task.TimeSpent + " spent)\n")
 	}
 	// TODO add priority and enthusasm
-	if m.showID {
-		s = padding + m.task.ID + "\n" + s
-	}
-	return s
+	return b.String()
 }
 
 func InitialTaskModel(t *helpers.RawTask) tea.Model {

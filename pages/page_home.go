@@ -6,6 +6,7 @@ import (
 	"pomodo/internal/database"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -16,7 +17,6 @@ var (
 	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
 	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Background(lipgloss.Color("170"))
 	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
-	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
 	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 )
 
@@ -93,9 +93,16 @@ func (m homeModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m homeModel) View() string {
-	s := header + padding + m.list.View()
-	s += m.state.HelpView()
-	return s
+	s := m.list.View()
+	k := []key.Binding{
+		m.list.KeyMap.CursorUp,
+		m.list.KeyMap.CursorDown,
+		m.list.KeyMap.Filter,
+		m.list.KeyMap.AcceptWhileFiltering,
+		m.list.KeyMap.Quit,
+		m.list.KeyMap.ForceQuit,
+	}
+	return m.state.View(s, k...)
 }
 
 func InitialHomeModel(s *State) homeModel {
@@ -109,9 +116,9 @@ func InitialHomeModel(s *State) homeModel {
 	l.Title = "Hi! Welcome to pomodo, what did you want to do?"
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
+	l.SetShowHelp(false)
 	l.Styles.Title = titleStyle
 	l.Styles.PaginationStyle = paginationStyle
-	l.Styles.HelpStyle = helpStyle
 
 	m := homeModel{list: l}
 	m.state = s
