@@ -5,16 +5,18 @@ import (
 )
 
 type buttonModel struct {
-	Label   string
-	Focused bool
-	OnClick func() (tea.Model, tea.Cmd)
+	Label        string
+	Focused      bool
+	ClickModel   tea.Model
+	ClickCommand tea.Cmd
 }
 
-func InitialButtonModel(label string, onClick func() (tea.Model, tea.Cmd)) buttonModel {
+func InitialButtonModel(label string, clickModel tea.Model, clickCommand tea.Cmd) buttonModel {
 	return buttonModel{
-		Label:   label,
-		OnClick: onClick,
-		Focused: false,
+		Label:        label,
+		Focused:      false,
+		ClickModel:   clickModel,
+		ClickCommand: clickCommand,
 	}
 }
 
@@ -30,7 +32,7 @@ func (m buttonModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		switch msg.Type {
 		case tea.KeyEnter:
-			return m.OnClick()
+			return m.ClickModel, m.ClickCommand
 		}
 	}
 	return m, nil

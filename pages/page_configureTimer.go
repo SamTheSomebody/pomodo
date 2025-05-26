@@ -1,7 +1,7 @@
 package pages
 
 import (
-	"strconv"
+	"fmt"
 	"strings"
 	"time"
 
@@ -36,15 +36,9 @@ func InitialConfigureTimerModel(s *State, t *uuid.UUID) configureTimerModel {
 	m.timerInput.SetValue("")
 	m.timerInput.Width = 50
 	m.timerInput.Focus()
-	m.button = InitialButtonModel("Confirm", onClick(&m))
+	m.button = InitialButtonModel("Confirm", InitialTimerModel(m.state, m.duration, m.taskID), nil) // Does this return the correct data?
 	s.Navigation.Add(m)
 	return m
-}
-
-func onClick(m *configureTimerModel) func() (tea.Model, tea.Cmd) {
-	return func() (tea.Model, tea.Cmd) {
-		return InitialTimerModel(m.state, m.duration, m.taskID), nil
-	}
 }
 
 func (m configureTimerModel) Init() tea.Cmd {
@@ -52,21 +46,22 @@ func (m configureTimerModel) Init() tea.Cmd {
 }
 
 func (m configureTimerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	m.state.Log = fmt.Sprintf("Msg: %v", msg)
 	if m.selectTask.Focused {
 		return m.selectTask.Update(msg)
 	}
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyEnter:
+		switch msg.String() {
+		case "enter":
 			if m.focus == focusCount-1 {
-				return m.button.OnClick()
+				return m.button.Update(msg)
 			}
 			return m.setFocus(1)
-		case tea.KeyTab:
+		case "tab", "down":
 			return m.setFocus(1)
-		case tea.KeyShiftTab:
+		case "shift+tab", "up":
 			return m.setFocus(-1)
 		}
 	}
@@ -97,7 +92,7 @@ func (m configureTimerModel) setFocus(increment int) (tea.Model, tea.Cmd) {
 		m.button.SetFocused(false)
 	}
 
-	m.focus += increment
+	m.focus += increment + focusCount
 	m.focus %= focusCount
 	m.button.SetFocused(false)
 	switch m.focus {
@@ -117,6 +112,6 @@ func (m configureTimerModel) View() string {
 	b.WriteString(m.timerInput.View() + "\n")
 	b.WriteString(m.selectTask.View() + "\n")
 	b.WriteString(m.button.View() + "\n")
-	b.WriteString("Focus: " + strconv.Itoa(m.focus))
+	// b.WriteString("Focus: " + strconv.Itoa(m.focus))
 	return m.state.View(b.String())
 }

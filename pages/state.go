@@ -1,6 +1,7 @@
 package pages
 
 import (
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -28,11 +29,12 @@ func NewState() *State {
 
 func (s *State) View(modelView string, keys ...key.Binding) string {
 	t, _ := time.ParseDuration("7h43m")
-	x := Header(s.Log, 10, t)
-	x += regularStyle.Render(modelView)
-	x += helpStyle.Render(s.helpView(keys...))
-	x += s.footer()
-	return x
+	b := strings.Builder{}
+	b.WriteString(Header(s.Log, 10, t))
+	b.WriteString(regularStyle.Render(modelView))
+	b.WriteString(helpStyle.Render(s.helpView(keys...)))
+	b.WriteString(s.footer())
+	return b.String()
 }
 
 func (s *State) footer() string {
@@ -50,7 +52,7 @@ func (s *State) helpView(keys ...key.Binding) string {
 		s.Keys.Enter,
 	}
 	b = append(b, keys...)
-	return "\n\n" + s.Help.ShortHelpView(b)
+	return "\n" + s.Help.ShortHelpView(b)
 }
 
 func (s *State) ProcessUniversalKeys(msg tea.Msg) (tea.Model, tea.Cmd) {

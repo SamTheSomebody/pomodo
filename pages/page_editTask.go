@@ -2,14 +2,14 @@ package pages
 
 import (
 	"fmt"
-	"log"
-	"pomodo/helpers"
-	"pomodo/internal/database"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/google/uuid"
+
+	"pomodo/helpers"
+	"pomodo/internal/database"
 )
 
 /* Visual
@@ -24,12 +24,11 @@ Editing task: (ID)
 */
 
 type editTaskModel struct {
-	state        *State
-	task         helpers.RawTask
-	inputs       []textinput.Model
-	focus        int
-	isCancelling bool
-	hasTask      bool
+	state   *State
+	task    helpers.RawTask
+	inputs  []textinput.Model
+	focus   int
+	hasTask bool
 }
 
 func InitialEditTaskModel(s *State, task database.Task) editTaskModel {
@@ -73,34 +72,14 @@ func (m editTaskModel) Init() tea.Cmd {
 func (m editTaskModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyEsc:
-			return m.state.Navigation.Back()
-		case tea.KeyShiftTab:
-			m.AdjustFocus(-1)
-			return m, nil
-		case tea.KeyTab:
-			m.AdjustFocus(1)
-			return m, nil
-		case tea.KeyEnter:
+		switch msg.String() {
+		case "shift+tab", "up":
+			return m.AdjustFocus(-1)
+		case "tab", "down":
+			return m.AdjustFocus(1)
+		case "enter":
 			if m.focus == len(m.inputs)-1 {
-				m.task.Name = m.inputs[0].Value()
-				m.task.Summary = m.inputs[1].Value()
-				m.task.DueAt = m.inputs[2].Value()
-				m.task.TimeEstimate = m.inputs[3].Value()
-				m.task.TimeSpent = m.inputs[4].Value()
-				m.task.Priority = m.inputs[5].Value()
-				m.task.Enthusiasm = m.inputs[6].Value()
-				var err error
-				if m.hasTask {
-					err = helpers.EditTask(m.task)
-				} else {
-					err = helpers.AddTask(m.task)
-				}
-				if err != nil {
-					log.Fatalf("SQL instertion error: %v", err)
-				}
-				return m.state.Navigation.Back()
+				return m.Submit()
 			}
 			m.AdjustFocus(1)
 			return m, nil
@@ -115,22 +94,37 @@ func (m editTaskModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *editTaskModel) AdjustFocus(amount int) {
-	m.inputs[m.focus].Blur()
-	m.focus = amount
-	if m.focus < 0 {
-		m.focus = 0
-	} else if m.focus >= len(m.inputs) {
-		m.focus = len(m.inputs) - 1
+func (m editTaskModel) Submit() (tea.Model, tea.Cmd) {
+	m.task.Name = m.inputs[0].Value()
+	m.task.Summary = m.inputs[1].Value()
+	m.task.DueAt = m.inputs[2].Value()
+	m.task.TimeEstimate = m.inputs[3].Value()
+	m.task.TimeSpent = m.inputs[4].Value()
+	m.task.Priority = m.inputs[5].Value()
+	m.task.Enthusiasm = m.inputs[6].Value()
+	var err error
+	if m.hasTask {
+		err = helpers.EditTask(m.task)
+	} else {
+		err = helpers.AddTask(m.task)
 	}
+	if err != nil {
+		m.state.Err = err
+		return m, nil
+	}
+
+	return m.state.Navigation.Back()
+}
+
+func (m editTaskModel) AdjustFocus(amount int) (tea.Model, tea.Cmd) {
+	m.inputs[m.focus].Blur()
+	m.focus += amount + len(m.inputs)
+	m.focus %= len(m.inputs)
 	m.inputs[m.focus].Focus()
+	return m, nil
 }
 
 func (m editTaskModel) View() string {
-	if m.isCancelling {
-		return "Cancelled"
-	}
-
 	b := strings.Builder{}
 	if m.hasTask {
 		b.WriteString("Editing")

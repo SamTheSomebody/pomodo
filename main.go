@@ -22,10 +22,20 @@ THE SOFTWARE.
 package main
 
 import (
-	"pomodo/cmd"
+	"fmt"
+	"os"
+
+	tea "github.com/charmbracelet/bubbletea"
+
+	"pomodo/pages"
 )
 
 func main() {
-	// fmt.Println("Launching pomodo!")
-	cmd.Execute()
+	s := pages.NewState()
+	p := tea.NewProgram(pages.InitialHomeModel(s), tea.WithAltScreen())
+	if _, err := p.Run(); err != nil {
+		fmt.Printf("Alas, there's been an error: %v", err)
+		os.Exit(1)
+	}
+	// cmd.Execute()
 }

@@ -10,14 +10,13 @@ import (
 )
 
 const (
-	header   = "Pomodo\n"
 	padding  = 2
 	maxWidth = 80
 )
 
 var (
 	regularStyle = lipgloss.NewStyle().
-			Padding(padding)
+			Padding(1, 2)
 
 	errorStyle = lipgloss.NewStyle().
 			Inherit(regularStyle).
@@ -45,7 +44,8 @@ var (
 	activeButtonStyle = lipgloss.NewStyle().
 				Inherit(buttonStyle).
 				Bold(true).
-				Background(lipgloss.Color("12"))
+				Italic(true).
+				Background(lipgloss.Color("#FF5F87"))
 
 	// Status Bar
 	statusNugget = lipgloss.NewStyle().
@@ -89,5 +89,5 @@ func Header(log string, taskCount int, allocatedTimeLength time.Duration) string
 		allocatedTime,
 	)
 
-	return statusBarStyle.Width(width).Render(bar)
+	return statusBarStyle.Width(width).Render(bar) + "\n"
 }
