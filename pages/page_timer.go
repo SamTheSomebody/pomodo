@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
@@ -17,17 +16,10 @@ import (
 type timerModel struct {
 	task          tea.Model
 	state         *State
-	keymap        timerKeyMap
 	timerModel    timer.Model
 	progressModel progress.Model
 	progress      float64
 	timeout       time.Duration
-}
-
-type timerKeyMap struct {
-	start key.Binding
-	stop  key.Binding
-	reset key.Binding
 }
 
 func (m timerModel) Init() tea.Cmd {
@@ -35,10 +27,7 @@ func (m timerModel) Init() tea.Cmd {
 }
 
 func (m timerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	if mod, cmd := m.state.ProcessUniversalKeys(msg); mod != nil || cmd != nil {
-		return mod, cmd
-	}
-
+	m.state.Message = msg
 	switch msg := msg.(type) {
 	case timer.TickMsg:
 		if !m.timerModel.Timedout() {
@@ -55,23 +44,25 @@ func (m timerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case timer.StartStopMsg:
 		var cmd tea.Cmd
 		m.timerModel, cmd = m.timerModel.Update(msg)
-		m.keymap.stop.SetEnabled(m.timerModel.Running())
-		m.keymap.start.SetEnabled(!m.timerModel.Running())
 		return m, cmd
 	case timer.TimeoutMsg:
 		m.state.Keys.Enter.SetEnabled(true)
 		return m, nil
 	case tea.KeyMsg:
-		switch {
-		case key.Matches(msg, m.state.Keys.Back):
+		switch msg.String() {
+		case "ctrl+c":
+			return nil, tea.Quit
+		case "esc":
 			return m.state.Navigation.Back()
-		case key.Matches(msg, m.keymap.reset):
+		case "r":
 			m.timerModel.Timeout = m.timeout
 			m.timerModel.Start()
-		case key.Matches(msg, m.keymap.start, m.keymap.stop):
+		case "s":
 			return m, m.timerModel.Toggle()
-		case key.Matches(msg, m.state.Keys.Enter):
-			return InitialHomeModel(m.state), nil // TODO add time to task
+		case "enter":
+			if m.timerModel.Timedout() {
+				return InitialHomeModel(m.state), nil // TODO add time to task
+			}
 		}
 	}
 	return m, nil
@@ -90,8 +81,7 @@ func (m timerModel) View() string {
 		b.WriteString("Finished!")
 	}
 
-	keys := []key.Binding{m.keymap.reset, m.keymap.start, m.keymap.stop}
-	return m.state.View(b.String(), keys...)
+	return m.state.View(b.String())
 }
 
 // TODO For some reason this doesn't start when initialized, and runs twice as fast when first manually started
@@ -107,22 +97,7 @@ func InitialTimerModel(s *State, duration time.Duration, taskID *uuid.UUID) time
 	}
 
 	m := timerModel{
-		task: task,
-		keymap: timerKeyMap{
-			start: key.NewBinding(
-				key.WithKeys("s"),
-				key.WithHelp("s", "start"),
-				key.WithDisabled(),
-			),
-			stop: key.NewBinding(
-				key.WithKeys("s"),
-				key.WithHelp("s", "stop"),
-			),
-			reset: key.NewBinding(
-				key.WithKeys("r"),
-				key.WithHelp("r", "reset"),
-			),
-		},
+		task:          task,
 		timerModel:    timer.New(duration),
 		progressModel: progress.New(),
 		progress:      0,

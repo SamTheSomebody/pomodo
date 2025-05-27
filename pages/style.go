@@ -1,10 +1,12 @@
 package pages
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"time"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"golang.org/x/term"
 )
@@ -20,21 +22,18 @@ var (
 
 	errorStyle = lipgloss.NewStyle().
 			Inherit(regularStyle).
-			Background(lipgloss.Color("7")).
-			Foreground(lipgloss.Color("9")).
+			Foreground(lipgloss.AdaptiveColor{Light: "#343433", Dark: "#FF5F87"}).
+			Background(lipgloss.AdaptiveColor{Light: "#FF5F87", Dark: "#353533"}).
 			Italic(true).
 			SetString("Error: ")
-
-	logStyle = lipgloss.NewStyle().
-			Inherit(regularStyle).
-			Background(lipgloss.Color("7")).
-			Foreground(lipgloss.Color("8")).
-			Italic(true).
-			SetString("Log: ")
 
 	helpStyle = lipgloss.NewStyle().
 			Inherit(regularStyle).
 			Foreground(lipgloss.Color("8"))
+
+	searchStyle = lipgloss.NewStyle().
+			Background(lipgloss.Color("8")).
+			Italic(true)
 
 	// Button Styles
 
@@ -72,19 +71,21 @@ var (
 	allocatedTimeStyle = statusNugget.Background(lipgloss.Color("#6124DF"))
 )
 
-func Header(log string, taskCount int, allocatedTimeLength time.Duration) string {
+func Header(log string, message tea.Msg, taskCount int, allocatedTimeLength time.Duration) string {
 	w := lipgloss.Width
 	width, _, _ := term.GetSize(int(os.Stdout.Fd()))
 	statusKey := statusStyle.Render("POMODO")
 	tasksRemaining := tasksRemainingStyle.Render(strconv.Itoa(taskCount) + " tasks")
 	allocatedTime := allocatedTimeStyle.Render(allocatedTimeLength.String())
+	statusMessage := statusText.Render(fmt.Sprintf(" %T: %v ", message, message))
 	statusVal := statusText.
-		Width(width - w(statusKey) - w(tasksRemaining) - w(allocatedTime)).
+		Width(width - w(statusKey) - w(tasksRemaining) - w(allocatedTime) - w(statusMessage)).
 		Render(log)
 
 	bar := lipgloss.JoinHorizontal(lipgloss.Top,
 		statusKey,
 		statusVal,
+		statusMessage,
 		tasksRemaining,
 		allocatedTime,
 	)

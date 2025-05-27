@@ -1,8 +1,6 @@
 package pages
 
 import (
-	"context"
-	"pomodo/helpers"
 	"strings"
 	"time"
 
@@ -12,19 +10,17 @@ import (
 )
 
 type State struct {
-	Navigation Navigation
-	Help       help.Model
-	Keys       keymap
+	Navigation *Navigation
+	Help       *help.Model
+	Keys       *keymap
 	Err        error
 	Log        string
-	Message    tea.Msg
 }
 
 func NewState() *State {
 	h := help.New()
 	s := &State{
-		Log:  "",
-		Help: h,
+		Help: &h,
 		Keys: NewKeymap(),
 	}
 	s.Navigation = NewNavigation(s)
@@ -32,30 +28,17 @@ func NewState() *State {
 }
 
 func (s *State) View(modelView string, keys ...key.Binding) string {
-	t, err := time.ParseDuration("7h43m")
-	if err != nil {
-		s.Err = err
-		return s.Err.Error()
-	}
-	db := helpers.GetDBQueries()
-	tasks, err := db.GetTasks(context.TODO())
-	if err != nil {
-		s.Err = err
-		return s.Err.Error()
-	}
-	taskCount := len(tasks)
+	t, _ := time.ParseDuration("7h43m")
 	b := strings.Builder{}
-	b.WriteString(Header(s.Log, s.Message, taskCount, t))
+	b.WriteString(Header(s.Log, 10, t))
 	b.WriteString(regularStyle.Render(modelView))
-	if keys != nil {
-		b.WriteString(helpStyle.Render(s.helpView(keys...)))
-	}
+	b.WriteString(helpStyle.Render(s.helpView(keys...)))
 	b.WriteString(s.footer())
 	return b.String()
 }
 
 func (s *State) footer() string {
-	x := "\n"
+	x := ""
 	if s.Err != nil {
 		x += errorStyle.Render(s.Err.Error())
 	}
@@ -70,4 +53,19 @@ func (s *State) helpView(keys ...key.Binding) string {
 	}
 	b = append(b, keys...)
 	return "\n" + s.Help.ShortHelpView(b)
+}
+
+func (s *State) ProcessUniversalKeys(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, s.Keys.Back):
+			return s.Navigation.Back()
+		case key.Matches(msg, s.Keys.Kill):
+			mod := InitialQuitModel(s)
+			s.Navigation.Add(mod)
+			return mod, nil
+		}
+	}
+	return nil, nil
 }

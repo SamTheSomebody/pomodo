@@ -11,7 +11,7 @@ func (m quitModel) Init() tea.Cmd {
 }
 
 func (m quitModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	return m.state.ProcessUniversalKeys(msg)
+	return m, tea.Quit
 }
 
 func (m quitModel) View() string {

@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"pomodo/internal/database"
 	"strconv"
 	"time"
 
 	"github.com/google/uuid"
-
-	"pomodo/internal/database"
 )
 
 func GetTask(context context.Context, value string) database.Task {
@@ -39,8 +38,15 @@ type RawTask struct {
 }
 
 func Raw(task database.Task) RawTask {
+	id := ""
+	switch task.ID.(type) {
+	case string:
+		id = task.ID.(string)
+	case uuid.UUID:
+		id = task.ID.(uuid.UUID).String()
+	}
 	rawTask := RawTask{
-		ID:           task.ID.(uuid.UUID).String(),
+		ID:           id,
 		Name:         task.Name,
 		Summary:      task.Summary,
 		DueAt:        defaultRawTime(task.DueAt),

@@ -2,37 +2,35 @@ package pages
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"pomodo/helpers"
+	"pomodo/internal/database"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/google/uuid"
-
-	"pomodo/helpers"
-	"pomodo/internal/database"
 )
 
 type selectTaskModel struct {
-	Options    []database.Task
-	Filtered   []database.Task
-	Selected   *database.Task
-	Search     string
-	Index      int
-	Open       bool
-	Focused    bool
-	ShowCursor bool
+	State    *State
+	Options  []database.Task
+	Filtered []database.Task
+	Selected *database.Task
+	Search   string
+	Index    int
+	Focused  bool
 }
 
-func InitialSelectTaskModel() selectTaskModel {
+func InitialSelectTaskModel(s *State) selectTaskModel {
 	db := helpers.GetDBQueries()
 	tasks, err := db.GetTasks(context.TODO())
 	if err != nil {
-		log.Fatal(err)
+		s.Err = err
 	}
 	return selectTaskModel{
+		State:    s,
 		Options:  tasks,
-		Filtered: tasks,
+		Filtered: make([]database.Task, 0),
 		Selected: nil,
 	}
 }
@@ -49,24 +47,22 @@ func (m selectTaskModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
-			if m.Open {
-				if len(m.Filtered) == 0 {
-					m.Selected = nil
-				}
-				m.Selected = &m.Filtered[m.Index]
-				m.Open = false
-				m.Search = ""
+			if len(m.Filtered) == 0 {
+				m.Selected = nil
 			} else {
-				m.Open = true
+				m.Selected = &m.Filtered[m.Index]
 			}
+			m.SetFocused(!m.Focused)
 			return m, nil
 		case "shift+tab", "up":
-			if m.Open && m.Index > 0 {
-				m.Index--
+			if len(m.Filtered) > 0 {
+				m.Index += len(m.Filtered) - 1
+				m.Index %= len(m.Filtered)
 			}
 		case "tab", "down":
-			if m.Open && m.Index < len(m.Filtered)-1 {
-				m.Index++
+			if len(m.Filtered) > 0 {
+				m.Index += len(m.Filtered) + 1
+				m.Index %= len(m.Filtered)
 			}
 		case "backspace":
 			if len(m.Search) > 0 {
@@ -74,7 +70,7 @@ func (m selectTaskModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.filterOptions()
 			}
 		default: // TODO this should check if it is a valid input key
-			if m.Open && msg.Type == tea.KeyRunes {
+			if msg.Type == tea.KeyRunes {
 				m.Search += string(msg.Runes)
 				m.filterOptions()
 			}
@@ -84,37 +80,33 @@ func (m selectTaskModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *selectTaskModel) filterOptions() {
-	search := strings.ToLower(m.Search)
-	m.Filtered = nil
-	for _, opt := range m.Options {
-		if strings.Contains(strings.ToLower(opt.Name), search) {
-			m.Filtered = append(m.Filtered, opt)
-		}
-	}
 	m.Index = 0
-	if len(m.Filtered) == 0 {
-		m.Filtered = []database.Task{{Name: "<no match>"}}
+	search := strings.ToLower(m.Search)
+	m.Filtered = m.Filtered[:0]
+	if len(m.Search) == 0 {
+		m.Filtered = m.Options
+		return
+	}
+	for _, option := range m.Options {
+		if strings.Contains(strings.ToLower(option.Name), search) {
+			m.Filtered = append(m.Filtered, option)
+		}
 	}
 }
 
 func (m selectTaskModel) View() string {
-	if len(m.Options) == 0 {
-		return ""
-	}
 	b := strings.Builder{}
 	b.WriteString("Select Task: [" + m.GetSelected() + " ]")
 	if !m.Focused {
 		return b.String()
 	}
-	s := lipgloss.NewStyle().Background(lipgloss.Color("8"))
-	b.WriteString("\n" + s.Render("Search: "+m.Search))
-	if m.Open {
-		for i, opt := range m.Filtered {
-			cursor := "  "
-			if i == m.Index {
-				cursor = "> "
-			}
-			b.WriteString(s.Render(cursor + opt.Name + "\n"))
+	s := fmt.Sprintf(" (%v of %v)", len(m.Filtered), len(m.Options))
+	b.WriteString("\nSearch: " + searchStyle.Render(m.Search) + s)
+	for i, option := range m.Filtered {
+		if i == m.Index {
+			b.WriteString(activeButtonStyle.Render("\n" + option.Name))
+		} else {
+			b.WriteString(buttonStyle.Render("\n" + option.Name))
 		}
 	}
 	return b.String()
@@ -123,7 +115,7 @@ func (m selectTaskModel) View() string {
 func (m *selectTaskModel) SetFocused(f bool) {
 	m.Focused = f
 	m.Search = ""
-	m.Open = f
+	m.Filtered = m.Options
 }
 
 func (m *selectTaskModel) GetSelected() string {
@@ -137,6 +129,17 @@ func (m *selectTaskModel) GetTaskID() *uuid.UUID {
 	if m.Selected == nil {
 		return nil
 	}
-	id := m.Selected.ID.(uuid.UUID)
-	return &id
+	switch m.Selected.ID.(type) {
+	case uuid.UUID:
+		id := m.Selected.ID.(uuid.UUID)
+		return &id
+	case string:
+		id, err := uuid.Parse(m.Selected.ID.(string))
+		if err != nil {
+			m.State.Err = err
+			return nil
+		}
+		return &id
+	}
+	return nil
 }

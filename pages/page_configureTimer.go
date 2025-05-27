@@ -1,7 +1,6 @@
 package pages
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -19,7 +18,6 @@ type configureTimerModel struct {
 	selectTask selectTaskModel
 	button     buttonModel
 	focus      int
-	err        error
 	duration   time.Duration
 }
 
@@ -28,7 +26,7 @@ func InitialConfigureTimerModel(s *State, t *uuid.UUID) configureTimerModel {
 		state:      s,
 		taskID:     t,
 		timerInput: textinput.New(),
-		selectTask: InitialSelectTaskModel(),
+		selectTask: InitialSelectTaskModel(s),
 		focus:      0,
 	}
 	m.timerInput.Prompt = "Duration: "
@@ -46,9 +44,13 @@ func (m configureTimerModel) Init() tea.Cmd {
 }
 
 func (m configureTimerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	m.state.Log = fmt.Sprintf("Msg: %v", msg)
+	m.state.Message = msg
 	if m.selectTask.Focused {
-		return m.selectTask.Update(msg)
+		mod, _ := m.selectTask.Update(msg)
+		m.selectTask = mod.(selectTaskModel)
+		if m.selectTask.Focused {
+			return m, nil
+		}
 	}
 
 	switch msg := msg.(type) {
@@ -63,11 +65,11 @@ func (m configureTimerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.setFocus(1)
 		case "shift+tab", "up":
 			return m.setFocus(-1)
+		case "esc":
+			return m.state.Navigation.Back()
+		case "ctrl+c":
+			return nil, tea.Quit
 		}
-	}
-
-	if mod, cmd := m.state.ProcessUniversalKeys(msg); mod != nil || cmd != nil {
-		return mod, cmd
 	}
 
 	switch m.focus {
@@ -83,7 +85,7 @@ func (m configureTimerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m configureTimerModel) setFocus(increment int) (tea.Model, tea.Cmd) {
 	switch m.focus {
 	case 0:
-		m.duration, m.err = time.ParseDuration(m.timerInput.Value())
+		m.duration, m.state.Err = time.ParseDuration(m.timerInput.Value())
 		m.timerInput.Blur()
 	case 1:
 		m.taskID = m.selectTask.GetTaskID()
@@ -112,6 +114,5 @@ func (m configureTimerModel) View() string {
 	b.WriteString(m.timerInput.View() + "\n")
 	b.WriteString(m.selectTask.View() + "\n")
 	b.WriteString(m.button.View() + "\n")
-	// b.WriteString("Focus: " + strconv.Itoa(m.focus))
 	return m.state.View(b.String())
 }

@@ -11,28 +11,31 @@ type Navigation struct {
 	History []tea.Model
 }
 
-func NewNavigation(state *State) *Navigation {
-	return &Navigation{
+func NewNavigation(state *State) Navigation {
+	return Navigation{
 		State:   state,
 		History: make([]tea.Model, 0),
 	}
 }
 
-func (s *Navigation) Back() (tea.Model, tea.Cmd) {
-	l := len(s.History) - 1
-	if l <= 0 {
-		return nil, tea.Quit
+func (n *Navigation) Back() (tea.Model, tea.Cmd) {
+	l := len(n.History) - 1
+	if l < 0 {
+		return InitialQuitModel(n.State), nil
 	}
-	m := s.History[l]
-	s.History = s.History[:l]
-	s.State.Log = fmt.Sprintf("Back to %T in navigation history [%v]", m, len(s.History))
+	m := n.History[l]
+	m.Init()
+	n.History = n.History[:l+1]
+	n.State.Log = fmt.Sprintf("Back to %T in navigation history [%v of %v], pointer: %p", m, l+1, len(n.History), &m)
 	return m, nil
 }
 
-func (s *Navigation) Add(m tea.Model) {
-	s.State.Log = fmt.Sprintf("Added %T to navigation history [%v]", m, len(s.History))
-	//if _, ok := m.(homeModel); ok {
-	//	s.History = s.History[:0]
-	//}
-	s.History = append(s.History, m)
+// TODO this isn't being called?
+func (n *Navigation) Add(m tea.Model) {
+	n.State.Err = nil
+	if _, ok := m.(homeModel); ok {
+		n.History = n.History[:0]
+	}
+	n.State.Log = fmt.Sprintf("Added %T to navigation history [%v], pointer: %p", m, len(n.History), &m)
+	n.History = append(n.History, m)
 }

@@ -2,14 +2,13 @@ package pages
 
 import (
 	"fmt"
+	"pomodo/helpers"
+	"pomodo/internal/database"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/google/uuid"
-
-	"pomodo/helpers"
-	"pomodo/internal/database"
 )
 
 /* Visual
@@ -61,7 +60,7 @@ func InitialEditTaskModel(s *State, task database.Task) editTaskModel {
 
 	m.inputs[0].Focus()
 	m.state = s
-	m.state.Navigation.Add(m)
+	s.Navigation.Add(m)
 	return m
 }
 
@@ -83,11 +82,9 @@ func (m editTaskModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.AdjustFocus(1)
 			return m, nil
+		case "esc":
+			return m.state.Navigation.Back()
 		}
-	}
-
-	if mod, cmd := m.state.ProcessUniversalKeys(msg); mod != nil || cmd != nil {
-		return mod, cmd
 	}
 
 	m.inputs[m.focus], _ = m.inputs[m.focus].Update(msg)

@@ -1,12 +1,10 @@
 package pages
 
 import (
-	"fmt"
+	"pomodo/internal/database"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-
-	"pomodo/internal/database"
 )
 
 type homeModel struct {
@@ -17,11 +15,16 @@ type homeModel struct {
 }
 
 func (m homeModel) Init() tea.Cmd {
+	m.focus = 0
+	for i := range m.buttons {
+		m.buttons[i].SetFocused(false)
+	}
+	m.buttons[m.focus].SetFocused(true)
 	return nil
 }
 
 func (m homeModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	m.state.Log = fmt.Sprintf("Msg: %v", msg)
+	m.state.Message = msg
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -32,13 +35,11 @@ func (m homeModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.setFocus(1)
 		case "shift+tab", "up", "k":
 			return m.setFocus(-1)
-		case "q":
+		case "b", "esc", "q":
 			return InitialQuitModel(m.state), nil
+		case "ctrl+c":
+			return nil, tea.Quit
 		}
-	}
-
-	if mod, cmd := m.state.ProcessUniversalKeys(msg); mod != nil || cmd != nil {
-		return mod, cmd
 	}
 
 	var cmd tea.Cmd

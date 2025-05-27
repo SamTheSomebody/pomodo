@@ -11,8 +11,8 @@ type keymap struct {
 	Enter key.Binding
 }
 
-func NewKeymap() *keymap {
-	return &keymap{
+func NewKeymap() keymap {
+	return keymap{
 		Kill: key.NewBinding(
 			key.WithKeys("ctrl+c"),
 			key.WithHelp("ctrl+c", "kill"),
