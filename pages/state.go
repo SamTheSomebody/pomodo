@@ -2,6 +2,7 @@ package pages
 
 import (
 	"context"
+	"fmt"
 	"pomodo/helpers"
 	"strings"
 	"time"
@@ -46,6 +47,7 @@ func (s *State) View(modelView string, keys ...key.Binding) string {
 	taskCount := len(tasks)
 	b := strings.Builder{}
 	b.WriteString(Header(s.Log, s.Message, taskCount, t))
+	b.WriteString(fmt.Sprintf("State: %p, Nav State: %p, Nav length: %v\n", s, s.Navigation.State, len(s.Navigation.History)))
 	b.WriteString(regularStyle.Render(modelView))
 	if keys != nil {
 		b.WriteString(helpStyle.Render(s.helpView(keys...)))

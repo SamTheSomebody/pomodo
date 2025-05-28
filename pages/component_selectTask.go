@@ -69,6 +69,9 @@ func (m selectTaskModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.Search = m.Search[:len(m.Search)-1]
 				m.filterOptions()
 			}
+		case "esc":
+			m.SetFocused(false)
+			return m, nil
 		default: // TODO this should check if it is a valid input key
 			if msg.Type == tea.KeyRunes {
 				m.Search += string(msg.Runes)
@@ -104,9 +107,9 @@ func (m selectTaskModel) View() string {
 	b.WriteString("\nSearch: " + searchStyle.Render(m.Search) + s)
 	for i, option := range m.Filtered {
 		if i == m.Index {
-			b.WriteString(activeButtonStyle.Render("\n" + option.Name))
+			b.WriteString("\n" + activeButtonStyle.Render(option.Name))
 		} else {
-			b.WriteString(buttonStyle.Render("\n" + option.Name))
+			b.WriteString("\n" + buttonStyle.Render(option.Name))
 		}
 	}
 	return b.String()

@@ -22,7 +22,38 @@ type timerModel struct {
 	timeout       time.Duration
 }
 
+// TODO For some reason this doesn't start when initialized, and runs twice as fast when first manually started
+func InitialTimerModel(s *State, duration time.Duration, taskID *uuid.UUID) timerModel {
+	var task tea.Model
+	if taskID != nil {
+		t, err := helpers.GetDBQueries().GetTaskByID(context.TODO(), taskID)
+		if err != nil {
+			log.Fatal(err)
+		}
+		rawTask := helpers.Raw(t)
+		task = InitialTaskModel(&rawTask)
+	}
+
+	m := timerModel{
+		task:          task,
+		timerModel:    timer.New(duration),
+		progressModel: progress.New(),
+		progress:      0,
+		timeout:       duration,
+		state:         s,
+	}
+	s.Navigation.Add(m)
+	return m
+}
+
+func OnTimerButtonClick(s *State, duration time.Duration, taskID *uuid.UUID) func() (tea.Model, tea.Cmd) {
+	return func() (tea.Model, tea.Cmd) {
+		return InitialTimerModel(s, duration, taskID), nil
+	}
+}
+
 func (m timerModel) Init() tea.Cmd {
+	m.timerModel.Timeout = m.timeout
 	return m.timerModel.Init()
 }
 
@@ -82,28 +113,4 @@ func (m timerModel) View() string {
 	}
 
 	return m.state.View(b.String())
-}
-
-// TODO For some reason this doesn't start when initialized, and runs twice as fast when first manually started
-func InitialTimerModel(s *State, duration time.Duration, taskID *uuid.UUID) timerModel {
-	var task tea.Model
-	if taskID != nil {
-		t, err := helpers.GetDBQueries().GetTaskByID(context.TODO(), taskID)
-		if err != nil {
-			log.Fatal(err)
-		}
-		rawTask := helpers.Raw(t)
-		task = InitialTaskModel(&rawTask)
-	}
-
-	m := timerModel{
-		task:          task,
-		timerModel:    timer.New(duration),
-		progressModel: progress.New(),
-		progress:      0,
-		timeout:       duration,
-		state:         s,
-	}
-	s.Navigation.Add(m)
-	return m
 }

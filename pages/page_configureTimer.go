@@ -34,9 +34,15 @@ func InitialConfigureTimerModel(s *State, t *uuid.UUID) configureTimerModel {
 	m.timerInput.SetValue("")
 	m.timerInput.Width = 50
 	m.timerInput.Focus()
-	m.button = InitialButtonModel("Confirm", InitialTimerModel(m.state, m.duration, m.taskID), nil) // Does this return the correct data?
+	m.button = InitialButtonModel("Confirm", OnTimerButtonClick(m.state, m.duration, m.taskID))
 	s.Navigation.Add(m)
 	return m
+}
+
+func OnConfigureTimerModelButtonClick(s *State, taskID *uuid.UUID) func() (tea.Model, tea.Cmd) {
+	return func() (tea.Model, tea.Cmd) {
+		return InitialConfigureTimerModel(s, taskID), nil
+	}
 }
 
 func (m configureTimerModel) Init() tea.Cmd {

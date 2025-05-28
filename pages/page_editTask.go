@@ -1,6 +1,7 @@
 package pages
 
 import (
+	"context"
 	"fmt"
 	"pomodo/helpers"
 	"pomodo/internal/database"
@@ -30,15 +31,28 @@ type editTaskModel struct {
 	hasTask bool
 }
 
-func InitialEditTaskModel(s *State, task database.Task) editTaskModel {
-	hasTask := task.ID != nil
+func InitialEditTaskModel(s *State, taskID *uuid.UUID) editTaskModel {
+	hasTask := taskID != nil
+	var task database.Task
 	if !hasTask {
-		task.ID = uuid.New()
+		task = database.Task{
+			ID: uuid.New(),
+		}
+	} else {
+		var err error
+		task, err = helpers.GetDBQueries().GetTaskByID(context.Background(), taskID)
+		if err != nil {
+			s.Err = err
+			task = database.Task{
+				ID: uuid.New(),
+			}
+		}
 	}
 
 	m := editTaskModel{
-		task:   helpers.Raw(task),
-		inputs: make([]textinput.Model, 7),
+		task:    helpers.Raw(task),
+		inputs:  make([]textinput.Model, 7),
+		hasTask: hasTask,
 	}
 
 	placeholders := []string{
@@ -62,6 +76,12 @@ func InitialEditTaskModel(s *State, task database.Task) editTaskModel {
 	m.state = s
 	s.Navigation.Add(m)
 	return m
+}
+
+func OnEditTaskButtonClick(s *State, taskID *uuid.UUID) func() (tea.Model, tea.Cmd) {
+	return func() (tea.Model, tea.Cmd) {
+		return InitialEditTaskModel(s, taskID), nil
+	}
 }
 
 func (m editTaskModel) Init() tea.Cmd {
