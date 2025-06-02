@@ -1,23 +1,24 @@
 package pages
 
 import (
+	tea "github.com/charmbracelet/bubbletea"
+
+	"pomodo/bubbletea"
 	"pomodo/bubbletea/button"
 	"pomodo/bubbletea/list"
-
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 type HomePage struct {
 	List list.Model
 }
 
-func NewHomePage() HomePage {
+func NewHomePage(keymap *bubbletea.KeyMap) HomePage {
 	m := HomePage{
 		List: list.New([]tea.Model{
 			button.New("Start Timer", func() (tea.Model, tea.Cmd) { return NewConfigureTimerPage(nil), nil }),
 			button.New("View Tasks", func() (tea.Model, tea.Cmd) { return NewViewTasksPage(), nil }),
 			button.New("Add Task", func() (tea.Model, tea.Cmd) { return NewEditTaskPage(nil), nil }),
-		}),
+		}, keymap),
 	}
 	return m
 }

@@ -8,6 +8,8 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"golang.org/x/term"
+
+	"pomodo/bubbletea"
 )
 
 const buffer = 0
@@ -15,13 +17,13 @@ const buffer = 0
 type Model struct {
 	Index  int
 	Items  []Item
-	Keys   *KeyMap
+	Keys   *bubbletea.KeyMap
 	Styles Styles
 	width  int
 	height int
 }
 
-func New(models []tea.Model) Model {
+func New(models []tea.Model, keymap *bubbletea.KeyMap) Model {
 	w, _, _ := term.GetSize(int(os.Stdout.Fd()))
 	h := len(models) + buffer
 	items := make([]Item, len(models))
@@ -30,7 +32,7 @@ func New(models []tea.Model) Model {
 	}
 	m := Model{
 		Items:  items,
-		Keys:   *DefaultKeyMap(),
+		Keys:   keymap,
 		width:  w,
 		height: h,
 	}
