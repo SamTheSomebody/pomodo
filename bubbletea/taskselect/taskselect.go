@@ -1,8 +1,9 @@
-package pages
+package taskselect
 
 import (
 	"context"
 	"fmt"
+	"log"
 	"pomodo/helpers"
 	"pomodo/internal/database"
 	"strings"
@@ -11,8 +12,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type selectTaskModel struct {
-	State    *State
+type Model struct {
 	Options  []database.Task
 	Filtered []database.Task
 	Selected *database.Task
@@ -21,25 +21,24 @@ type selectTaskModel struct {
 	Focused  bool
 }
 
-func InitialSelectTaskModel(s *State) selectTaskModel {
+func New() Model {
 	db := helpers.GetDBQueries()
 	tasks, err := db.GetTasks(context.TODO())
 	if err != nil {
-		s.Err = err
+		log.Fatal(err)
 	}
-	return selectTaskModel{
-		State:    s,
+	return Model{
 		Options:  tasks,
 		Filtered: make([]database.Task, 0),
 		Selected: nil,
 	}
 }
 
-func (m selectTaskModel) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m selectTaskModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if !m.Focused {
 		return m, nil
 	}
@@ -82,7 +81,7 @@ func (m selectTaskModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *selectTaskModel) filterOptions() {
+func (m *Model) filterOptions() {
 	m.Index = 0
 	search := strings.ToLower(m.Search)
 	m.Filtered = m.Filtered[:0]
@@ -97,38 +96,38 @@ func (m *selectTaskModel) filterOptions() {
 	}
 }
 
-func (m selectTaskModel) View() string {
+func (m Model) View() string {
 	b := strings.Builder{}
 	b.WriteString("Select Task: [" + m.GetSelected() + " ]")
 	if !m.Focused {
 		return b.String()
 	}
 	s := fmt.Sprintf(" (%v of %v)", len(m.Filtered), len(m.Options))
-	b.WriteString("\nSearch: " + searchStyle.Render(m.Search) + s)
+	b.WriteString("\nSearch: " + m.Search + s)
 	for i, option := range m.Filtered {
 		if i == m.Index {
-			b.WriteString("\n" + activeButtonStyle.Render(option.Name))
+			b.WriteString("\n" + option.Name)
 		} else {
-			b.WriteString("\n" + buttonStyle.Render(option.Name))
+			b.WriteString("\n" + (option.Name))
 		}
 	}
 	return b.String()
 }
 
-func (m *selectTaskModel) SetFocused(f bool) {
+func (m *Model) SetFocused(f bool) {
 	m.Focused = f
 	m.Search = ""
 	m.Filtered = m.Options
 }
 
-func (m *selectTaskModel) GetSelected() string {
+func (m *Model) GetSelected() string {
 	if m.Selected == nil {
 		return "None"
 	}
 	return m.Selected.Name
 }
 
-func (m *selectTaskModel) GetTaskID() *uuid.UUID {
+func (m *Model) GetTaskID() *uuid.UUID {
 	if m.Selected == nil {
 		return nil
 	}
@@ -139,8 +138,7 @@ func (m *selectTaskModel) GetTaskID() *uuid.UUID {
 	case string:
 		id, err := uuid.Parse(m.Selected.ID.(string))
 		if err != nil {
-			m.State.Err = err
-			return nil
+			log.Fatal(err)
 		}
 		return &id
 	}

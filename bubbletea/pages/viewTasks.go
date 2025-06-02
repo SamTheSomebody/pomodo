@@ -3,7 +3,9 @@ package pages
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
+	"pomodo/bubbletea"
 	"pomodo/helpers"
 	"strings"
 
@@ -17,20 +19,15 @@ import (
 Name |
 */
 
-type viewTasksModel struct {
-	state *State
-	table table.Model
+type ViewTasksPage struct {
+	Table table.Model
 }
 
-func InitialViewTasksModel(s *State) tea.Model {
-	m := viewTasksModel{
-		state: s,
-	}
+func NewViewTasksPage() tea.Model {
 	db := helpers.GetDBQueries()
 	tasks, err := db.GetTasks(context.Background())
 	if err != nil {
-		s.Err = err
-		// return m
+		log.Fatal(err) // TODO return a cmd
 	}
 	rows := make([]table.Row, len(tasks))
 	for i, task := range tasks {
@@ -56,65 +53,53 @@ func InitialViewTasksModel(s *State) tea.Model {
 		}),
 	)
 	width, height, _ := term.GetSize(int(os.Stdout.Fd()))
-	t.SetWidth(width)
 	height = min(height, len(tasks)+1)
+	t.SetWidth(width)
 	t.SetHeight(height)
-	m.table = t
-	s.Log = fmt.Sprintf("Adding %T to %T, State: %p, Navigation State: %p", m, s, &s, &s.Navigation.State)
-	s.Navigation.Add(m)
-	return m
+	return ViewTasksPage{Table: t}
 }
 
-func OnViewTasksButtonClick(s *State) func() (tea.Model, tea.Cmd) {
+func OnViewTasksButtonClick() func() (tea.Model, tea.Cmd) {
 	return func() (tea.Model, tea.Cmd) {
-		return InitialViewTasksModel(s), nil
+		return NewViewTasksPage(), nil
 	}
 }
 
-func (m viewTasksModel) Init() tea.Cmd {
+func (m ViewTasksPage) Init() tea.Cmd {
 	return nil
 }
 
-func (m viewTasksModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	m.state.Message = msg
+func (m ViewTasksPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
-			id, err := uuid.Parse(m.table.SelectedRow()[0])
+			id, err := uuid.Parse(m.Table.SelectedRow()[0])
 			if err != nil {
-				m.state.Err = err
-				return m, nil
+				return m, bubbletea.ErrCmd(err)
 			}
-			return InitialEditTaskModel(m.state, &id), nil
+			return NewEditTaskPage(&id), nil // TODO goto page command
 		case "delete":
-			id, err := uuid.Parse(m.table.SelectedRow()[0])
-			m.state.Log = "Deleting: " + m.table.SelectedRow()[0]
+			id, err := uuid.Parse(m.Table.SelectedRow()[0])
 			if err != nil {
-				m.state.Err = err
-				return m, nil
+				return m, bubbletea.ErrCmd(err)
 			}
 			db := helpers.GetDBQueries()
 			err = db.DeleteTask(context.TODO(), id)
 			if err != nil {
-				m.state.Err = err
-				return m, nil
+				return m, bubbletea.ErrCmd(err)
 			}
-			return InitialViewTasksModel(m.state), nil
-		case "b", "esc", "q":
-			return m.state.Navigation.Back()
-		case "ctrl+c":
-			return nil, tea.Quit
+			return NewViewTasksPage(), bubbletea.LogCmd("Deleted: " + m.Table.SelectedRow()[0]) // TODO goto page command
 		}
 	}
-	m.table, _ = m.table.Update(msg)
+	m.Table, _ = m.Table.Update(msg)
 	var cmd tea.Cmd
 	return m, cmd
 }
 
-func (m viewTasksModel) View() string {
+func (m ViewTasksPage) View() string {
 	b := strings.Builder{}
-	b.WriteString(fmt.Sprint("TABLE with ", len(m.table.Rows()), " entries!\n"))
-	b.WriteString(m.table.View())
-	return m.state.View(b.String())
+	b.WriteString(fmt.Sprint("Table with ", len(m.Table.Rows()), " entries!\n"))
+	b.WriteString(m.Table.View())
+	return b.String()
 }

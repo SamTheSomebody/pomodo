@@ -1,14 +1,7 @@
 package pages
 
 import (
-	"fmt"
-	"os"
-	"strconv"
-	"time"
-
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"golang.org/x/term"
 )
 
 const (
@@ -70,25 +63,3 @@ var (
 
 	allocatedTimeStyle = statusNugget.Background(lipgloss.Color("#6124DF"))
 )
-
-func Header(log string, message tea.Msg, taskCount int, allocatedTimeLength time.Duration) string {
-	w := lipgloss.Width
-	width, _, _ := term.GetSize(int(os.Stdout.Fd()))
-	statusKey := statusStyle.Render("POMODO")
-	tasksRemaining := tasksRemainingStyle.Render(strconv.Itoa(taskCount) + " tasks")
-	allocatedTime := allocatedTimeStyle.Render(allocatedTimeLength.String())
-	statusMessage := statusText.Render(fmt.Sprintf(" %T: %v ", message, message))
-	statusVal := statusText.
-		Width(width - w(statusKey) - w(tasksRemaining) - w(allocatedTime) - w(statusMessage)).
-		Render(log)
-
-	bar := lipgloss.JoinHorizontal(lipgloss.Top,
-		statusKey,
-		statusVal,
-		statusMessage,
-		tasksRemaining,
-		allocatedTime,
-	)
-
-	return statusBarStyle.Width(width).Render(bar) + "\n"
-}

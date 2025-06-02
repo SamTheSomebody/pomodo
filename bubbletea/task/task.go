@@ -1,4 +1,4 @@
-package pages
+package task
 
 import (
 	"pomodo/helpers"
@@ -16,7 +16,7 @@ import (
 */
 
 // TODO width options
-type taskModel struct {
+type Model struct {
 	task          *helpers.RawTask
 	isInLineView  bool
 	hideEnthusasm bool
@@ -27,66 +27,72 @@ type taskModel struct {
 	showID        bool
 }
 
-type taskOption func(*taskModel)
+func New(task *helpers.RawTask, opts ...Option) Model {
+	return Model{
+		task: task,
+	}
+}
 
-func WithInLineView() taskOption {
-	return func(m *taskModel) {
+type Option func(*Model)
+
+func WithInLineView() Option {
+	return func(m *Model) {
 		m.isInLineView = true
 	}
 }
 
-func WithoutEnthusiasm() taskOption {
-	return func(m *taskModel) {
+func WithoutEnthusiasm() Option {
+	return func(m *Model) {
 		m.hideEnthusasm = true
 	}
 }
 
-func WithoutPriority() taskOption {
-	return func(m *taskModel) {
+func WithoutPriority() Option {
+	return func(m *Model) {
 		m.hidePriority = true
 	}
 }
 
-func WithoutSummary() taskOption {
-	return func(m *taskModel) {
+func WithoutSummary() Option {
+	return func(m *Model) {
 		m.hideEnthusasm = true
 	}
 }
 
-func WithoutDueAt() taskOption {
-	return func(m *taskModel) {
+func WithoutDueAt() Option {
+	return func(m *Model) {
 		m.hideDueAt = true
 	}
 }
 
-func WithoutTimes() taskOption {
-	return func(m *taskModel) {
+func WithoutTimes() Option {
+	return func(m *Model) {
 		m.hideTimes = true
 	}
 }
 
-func WithID() taskOption {
-	return func(m *taskModel) {
+func WithID() Option {
+	return func(m *Model) {
 		m.showID = true
 	}
 }
 
-func (m taskModel) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m taskModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return nil, nil
 }
 
-func (m taskModel) View() string {
+func (m Model) View() string {
 	if m.isInLineView {
 		return ""
 	}
 	return m.fullView()
 }
 
-func (m taskModel) fullView() string {
+func (m Model) fullView() string {
 	b := strings.Builder{}
 	if m.showID {
 		b.WriteString(m.task.ID + "\n")
@@ -104,10 +110,4 @@ func (m taskModel) fullView() string {
 	}
 	// TODO add priority and enthusasm
 	return b.String()
-}
-
-func InitialTaskModel(t *helpers.RawTask) tea.Model {
-	return taskModel{
-		task: t,
-	}
 }
