@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"pomodo/bubbletea"
-	"pomodo/helpers"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/google/uuid"
 	"golang.org/x/term"
+
+	"pomodo/bubbletea"
+	"pomodo/helpers"
 )
 
 /*
@@ -20,10 +21,11 @@ Name |
 */
 
 type ViewTasksPage struct {
-	Table table.Model
+	Table  table.Model
+	KeyMap *bubbletea.KeyMap
 }
 
-func NewViewTasksPage() tea.Model {
+func NewViewTasksPage(keymap *bubbletea.KeyMap) tea.Model {
 	db := helpers.GetDBQueries()
 	tasks, err := db.GetTasks(context.Background())
 	if err != nil {
@@ -56,13 +58,7 @@ func NewViewTasksPage() tea.Model {
 	height = min(height, len(tasks)+1)
 	t.SetWidth(width)
 	t.SetHeight(height)
-	return ViewTasksPage{Table: t}
-}
-
-func OnViewTasksButtonClick() func() (tea.Model, tea.Cmd) {
-	return func() (tea.Model, tea.Cmd) {
-		return NewViewTasksPage(), nil
-	}
+	return ViewTasksPage{Table: t, KeyMap: keymap}
 }
 
 func (m ViewTasksPage) Init() tea.Cmd {
@@ -78,7 +74,7 @@ func (m ViewTasksPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err != nil {
 				return m, bubbletea.ErrCmd(err)
 			}
-			return NewEditTaskPage(&id), nil // TODO goto page command
+			return NewEditTaskPage(&id, m.KeyMap), nil // TODO goto page command
 		case "delete":
 			id, err := uuid.Parse(m.Table.SelectedRow()[0])
 			if err != nil {
@@ -89,7 +85,7 @@ func (m ViewTasksPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err != nil {
 				return m, bubbletea.ErrCmd(err)
 			}
-			return NewViewTasksPage(), bubbletea.LogCmd("Deleted: " + m.Table.SelectedRow()[0]) // TODO goto page command
+			return NewViewTasksPage(m.KeyMap), bubbletea.LogCmd("Deleted: " + m.Table.SelectedRow()[0]) // TODO goto page command
 		}
 	}
 	m.Table, _ = m.Table.Update(msg)

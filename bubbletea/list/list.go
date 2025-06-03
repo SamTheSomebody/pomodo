@@ -2,12 +2,10 @@ package list
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
-	"golang.org/x/term"
 
 	"pomodo/bubbletea"
 )
@@ -15,28 +13,19 @@ import (
 const buffer = 0
 
 type Model struct {
-	Index  int
-	Items  []Item
-	Keys   *bubbletea.KeyMap
-	Styles Styles
-	width  int
-	height int
+	Index          int
+	Items          []Item
+	IsItemSelected bool
+	Keys           *bubbletea.KeyMap
+	Styles         Styles
 }
 
-func New(models []tea.Model, keymap *bubbletea.KeyMap) Model {
-	w, _, _ := term.GetSize(int(os.Stdout.Fd()))
-	h := len(models) + buffer
-	items := make([]Item, len(models))
-	for i, model := range models {
-		items[i] = NewItem(model)
-	}
+func New(items []Item, keymap *bubbletea.KeyMap) Model {
 	m := Model{
 		Items:  items,
 		Keys:   keymap,
-		width:  w,
-		height: h,
+		Styles: DefaultStyle(),
 	}
-	m.SetFocus(0)
 	return m
 }
 
@@ -45,51 +34,49 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	selected := m.Items[m.Index]
-	if selected.IsFocused {
-		model, cmd, isNewModel := selected.Update(msg)
-		if isNewModel {
-			return model, cmd
-		}
-		m.Items[m.Index].Model = model
-		return m, cmd
-	}
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		if m.IsItemSelected {
+			if key.Matches(msg, m.Keys.Cancel) {
+				m.IsItemSelected = false
+				m.Items[m.Index], _ = m.Items[m.Index].OnCancel()
+				return m, bubbletea.EnableNavigationCmd(true)
+			}
+			if key.Matches(msg, m.Keys.Submit) {
+				m.IsItemSelected = false
+				m.Items[m.Index], _ = m.Items[m.Index].OnSubmit()
+				return m, bubbletea.EnableNavigationCmd(true)
+			}
+			model, _ := m.Items[m.Index].Update(msg)
+			m.Items[m.Index] = model.(Item)
+			return m, bubbletea.EnableNavigationCmd(false)
+		}
 		if key.Matches(msg, m.Keys.CursorUp) {
-			m.AdjustFocus(-1)
+			m.Index += len(m.Items) - 1
+			m.Index %= len(m.Items)
 			return m, nil
 		}
 		if key.Matches(msg, m.Keys.CursorDown) {
-			m.AdjustFocus(1)
+			m.Index++
+			m.Index %= len(m.Items)
 			return m, nil
 		}
 		if key.Matches(msg, m.Keys.GoToEnd) {
-			m.SetFocus(len(m.Items) - 1)
+			m.Index = len(m.Items) - 1
 			return m, nil
 		}
 		if key.Matches(msg, m.Keys.GoToStart) {
-			m.SetFocus(0)
-			return m, nil
-		}
-		if key.Matches(msg, m.Keys.Cancel) {
-			selected.Blur()
-			selected.Cancel()
-			m.Keys.SetItemFocus(false)
-			return m, nil
-		}
-		if key.Matches(msg, m.Keys.Confirm) {
-			selected.Blur()
-			m.Keys.SetItemFocus(false)
+			m.Index = 0
 			return m, nil
 		}
 		if key.Matches(msg, m.Keys.Select) {
-			selected.Focus()
-			m.Keys.SetItemFocus(true)
-			return m, nil
-		}
-		if key.Matches(msg, m.Keys.ForceQuit) {
-			return m, tea.Quit
+			m.IsItemSelected = true
+			var cmd tea.Cmd
+			m.Items[m.Index], cmd = m.Items[m.Index].OnSelect()
+			if cmd != nil {
+				return m, cmd
+			}
+			return m, bubbletea.EnableNavigationCmd(false)
 		}
 	}
 	return m, nil
@@ -97,29 +84,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() string {
 	b := strings.Builder{}
-	b.WriteString(fmt.Sprintf("List with %v items, Key Confirm Enabled: %v, Key Select Enabled: %v\n",
-		len(m.Items), m.Keys.Confirm.Enabled(), m.Keys.Select.Enabled()))
+	b.WriteString(fmt.Sprintf("List with %v items, IsItemSelected: %v, Index: %v, Select Enabled: %v, Submit Enabled: %v\n",
+		len(m.Items), m.IsItemSelected, m.Index, m.Keys.Select.Enabled(), m.Keys.Submit.Enabled()))
 	for i, item := range m.Items {
-		if m.Index == i {
-			b.WriteString(" ")
-		}
-		b.WriteString(m.Styles.Render(item) + "\n")
+		b.WriteString(m.Styles.Render(item, m.Index == i) + "\n")
 	}
 	return b.String()
-}
-
-func (m *Model) AdjustFocus(increment int) {
-	m.Items[m.Index].Blur()
-	m.Index += increment + len(m.Items)
-	m.Index %= len(m.Items)
-	m.Items[m.Index].Focus()
-}
-
-func (m *Model) SetFocus(index int) {
-	if index < 0 || index >= len(m.Items) {
-		return
-	}
-	m.Items[m.Index].Blur()
-	m.Index = index
-	m.Items[m.Index].Focus()
 }

@@ -14,17 +14,17 @@ type HomePage struct {
 
 func NewHomePage(keymap *bubbletea.KeyMap) HomePage {
 	m := HomePage{
-		List: list.New([]tea.Model{
-			button.New("Start Timer", func() (tea.Model, tea.Cmd) { return NewConfigureTimerPage(nil), nil }),
-			button.New("View Tasks", func() (tea.Model, tea.Cmd) { return NewViewTasksPage(), nil }),
-			button.New("Add Task", func() (tea.Model, tea.Cmd) { return NewEditTaskPage(nil), nil }),
+		List: list.New([]list.Item{
+			button.New("Start Timer", func() (tea.Model, tea.Cmd) { return NewConfigureTimerPage(nil, keymap), nil }),
+			button.New("View Tasks", func() (tea.Model, tea.Cmd) { return NewViewTasksPage(keymap), nil }),
+			button.New("Add Task", func() (tea.Model, tea.Cmd) { return NewEditTaskPage(nil, keymap), nil }),
 		}, keymap),
 	}
 	return m
 }
 
 func (m HomePage) Init() tea.Cmd {
-	return nil
+	return m.List.Init()
 }
 
 func (m HomePage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"pomodo/bubbletea"
-	"pomodo/helpers"
 	"reflect"
 	"strings"
 	"time"
@@ -15,6 +13,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"golang.org/x/term"
+
+	"pomodo/bubbletea"
+	"pomodo/helpers"
 )
 
 type RootPage struct {
@@ -27,9 +28,10 @@ type RootPage struct {
 }
 
 func NewRootPage() RootPage {
+	keymap := bubbletea.DefaultKeyMap()
 	return RootPage{
-		Pages:  []tea.Model{NewHomePage()},
-		KeyMap: bubbletea.DefaultKeyMap(),
+		Pages:  []tea.Model{NewHomePage(&keymap)},
+		KeyMap: keymap,
 		Help:   help.New(),
 	}
 }
@@ -52,10 +54,6 @@ func (m RootPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.Pages = m.Pages[:len(m.Pages)-1]
 			m.Pages[len(m.Pages)-1].Init()
-			return m, nil
-		}
-		if key.Matches(msg, m.KeyMap.Cancel) {
-			m.KeyMap.SetItemFocus(false)
 			return m, nil
 		}
 	case bubbletea.NewPageMsg:
@@ -81,8 +79,9 @@ func (m RootPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case bubbletea.LogMsg:
 		m.Log = msg.Message
 		return m, nil
-	case bubbletea.FocusMsg:
-		m.KeyMap.SetItemFocus(msg.IsFocused)
+	case bubbletea.EnableNavigationMsg:
+		m.KeyMap.EnableNavigation(msg.Enabled)
+		m.Log = fmt.Sprintf("Nagivtaion Enabled: %v", msg.Enabled)
 		return m, nil
 	}
 	m.Pages[len(m.Pages)-1], cmd = m.Pages[len(m.Pages)-1].Update(msg)

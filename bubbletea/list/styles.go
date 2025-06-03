@@ -7,16 +7,17 @@ type Styles struct {
 	InactiveItem lipgloss.Style
 }
 
-func (s Styles) Render(i Item) string {
-	if i.IsFocused {
-		return s.ActiveItem.Render(i.Model.View())
+func (s Styles) Render(i Item, isFocused bool) string {
+	if isFocused {
+		return s.ActiveItem.Render(i.View())
 	}
-	return s.InactiveItem.Render(i.Model.View())
+	return s.InactiveItem.Render(i.View())
 }
 
 func DefaultStyle() Styles {
 	return Styles{
-		ActiveItem:   lipgloss.NewStyle().Background(lipgloss.Color("#A550DF")),
+		ActiveItem: lipgloss.NewStyle().Bold(true).Italic(true).
+			PaddingLeft(2).Background(lipgloss.Color("#A550DF")),
 		InactiveItem: lipgloss.NewStyle(),
 	}
 }

@@ -36,12 +36,12 @@ func LogCmd(message string) tea.Cmd {
 }
 
 // Focus Message for enabling/disabling navigation
-type FocusMsg struct {
-	IsFocused bool
+type EnableNavigationMsg struct {
+	Enabled bool
 }
 
-func FocusCmd(isFocused bool) tea.Cmd {
+func EnableNavigationCmd(enabled bool) tea.Cmd {
 	return func() tea.Msg {
-		return FocusMsg{IsFocused: isFocused}
+		return EnableNavigationMsg{Enabled: enabled}
 	}
 }

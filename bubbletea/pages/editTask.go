@@ -3,16 +3,17 @@ package pages
 import (
 	"context"
 	"fmt"
-	"pomodo/bubbletea"
-	"pomodo/bubbletea/button"
-	"pomodo/bubbletea/list"
-	"pomodo/helpers"
-	"pomodo/internal/database"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/google/uuid"
+
+	"pomodo/bubbletea"
+	"pomodo/bubbletea/button"
+	"pomodo/bubbletea/list"
+	"pomodo/helpers"
+	"pomodo/internal/database"
 )
 
 /* Visual
@@ -33,7 +34,7 @@ type EditTaskPage struct {
 	HasTask bool
 }
 
-func NewEditTaskPage(taskID *uuid.UUID) EditTaskPage {
+func NewEditTaskPage(taskID *uuid.UUID, keymap *bubbletea.KeyMap) EditTaskPage {
 	hasTask := taskID != nil
 	var task database.Task
 	if !hasTask {
@@ -73,20 +74,13 @@ func NewEditTaskPage(taskID *uuid.UUID) EditTaskPage {
 		input.Placeholder = v.placeholder
 		input.Prompt = v.prompt
 		input.Width = 50 // TODO make this a sane automated size
-		item := list.TextInputItem{Input: input}
-		items[i] = list.NewItem(item)
+		items[i] = list.TextInputItem{Input: input}
 	}
 
 	confirmButton := button.New("Confirm", confirmButton(&m))
-	items[len(values)] = list.NewItem(confirmButton)
-	m.List = list.New(items)
+	items[len(values)] = confirmButton
+	m.List = list.New(items, keymap)
 	return m
-}
-
-func OnEditTaskButtonClick(taskID *uuid.UUID) func() (tea.Model, tea.Cmd) {
-	return func() (tea.Model, tea.Cmd) {
-		return NewEditTaskPage(taskID), nil
-	}
 }
 
 func (m EditTaskPage) Init() tea.Cmd {
@@ -105,13 +99,13 @@ func (m EditTaskPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m EditTaskPage) Submit() (tea.Model, tea.Cmd) {
-	m.Task.Name = m.List.Items[0].Model.(list.TextInputItem).Input.Value()
-	m.Task.Summary = m.List.Items[1].Model.(list.TextInputItem).Input.Value()
-	m.Task.DueAt = m.List.Items[2].Model.(list.TextInputItem).Input.Value()
-	m.Task.TimeEstimate = m.List.Items[3].Model.(list.TextInputItem).Input.Value()
-	m.Task.TimeSpent = m.List.Items[4].Model.(list.TextInputItem).Input.Value()
-	m.Task.Priority = m.List.Items[5].Model.(list.TextInputItem).Input.Value()
-	m.Task.Enthusiasm = m.List.Items[6].Model.(list.TextInputItem).Input.Value()
+	m.Task.Name = m.List.Items[0].(list.TextInputItem).Input.Value()
+	m.Task.Summary = m.List.Items[1].(list.TextInputItem).Input.Value()
+	m.Task.DueAt = m.List.Items[2].(list.TextInputItem).Input.Value()
+	m.Task.TimeEstimate = m.List.Items[3].(list.TextInputItem).Input.Value()
+	m.Task.TimeSpent = m.List.Items[4].(list.TextInputItem).Input.Value()
+	m.Task.Priority = m.List.Items[5].(list.TextInputItem).Input.Value()
+	m.Task.Enthusiasm = m.List.Items[6].(list.TextInputItem).Input.Value()
 	var err error
 	if m.HasTask {
 		err = helpers.EditTask(m.Task)

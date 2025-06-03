@@ -13,9 +13,9 @@ type KeyMap struct {
 	GoToEnd    key.Binding
 	Return     key.Binding
 
-	Select  key.Binding
-	Confirm key.Binding
-	Cancel  key.Binding
+	Select key.Binding
+	Submit key.Binding
+	Cancel key.Binding
 
 	Quit      key.Binding
 	ForceQuit key.Binding
@@ -58,7 +58,7 @@ func DefaultKeyMap() KeyMap {
 			key.WithKeys("enter"),
 			key.WithHelp("enter", "select"),
 		),
-		Confirm: key.NewBinding(
+		Submit: key.NewBinding(
 			key.WithKeys("enter"),
 			key.WithHelp("enter", "confirm"),
 			key.WithDisabled(),
@@ -79,16 +79,18 @@ func DefaultKeyMap() KeyMap {
 }
 
 // Disables navigation if item is focused
-func (k *KeyMap) SetItemFocus(b bool) {
-	k.Confirm.SetEnabled(b)
-	k.Cancel.SetEnabled(b)
-	k.Select.SetEnabled(!b)
+func (k *KeyMap) EnableNavigation(b bool) {
+	k.Submit.SetEnabled(!b)
+	k.Cancel.SetEnabled(!b)
 
-	k.CursorUp.SetEnabled(!b)
-	k.CursorDown.SetEnabled(!b)
-	k.NextPage.SetEnabled(!b)
-	k.PrevPage.SetEnabled(!b)
-	k.GoToStart.SetEnabled(!b)
-	k.GoToEnd.SetEnabled(!b)
-	k.Quit.SetEnabled(!b)
+	k.Select.SetEnabled(b)
+	k.Return.SetEnabled(b)
+
+	k.CursorUp.SetEnabled(b)
+	k.CursorDown.SetEnabled(b)
+	k.NextPage.SetEnabled(b)
+	k.PrevPage.SetEnabled(b)
+	k.GoToStart.SetEnabled(b)
+	k.GoToEnd.SetEnabled(b)
+	k.Quit.SetEnabled(b)
 }
