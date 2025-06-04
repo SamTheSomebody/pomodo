@@ -19,20 +19,24 @@ import (
 )
 
 type RootPage struct {
-	Pages  []tea.Model
-	KeyMap bubbletea.KeyMap
-	Log    string
-	Msg    tea.Msg
-	Err    error
-	Help   help.Model
+	Pages         []tea.Model
+	KeyMap        bubbletea.KeyMap
+	Log           string
+	Msg           tea.Msg
+	Err           error
+	Help          help.Model
+	AllocatedTime time.Duration
 }
 
 func NewRootPage() RootPage {
 	keymap := bubbletea.DefaultKeyMap()
+	allocatedTime, err := helpers.GetAllocatedTime()
 	return RootPage{
-		Pages:  []tea.Model{NewHomePage(&keymap)},
-		KeyMap: keymap,
-		Help:   help.New(),
+		Pages:         []tea.Model{NewHomePage(&keymap)},
+		KeyMap:        keymap,
+		Help:          help.New(),
+		AllocatedTime: allocatedTime,
+		Err:           err,
 	}
 }
 
@@ -91,10 +95,6 @@ func (m RootPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m RootPage) View() string {
 	b := strings.Builder{}
 	// Header (Status Bar)
-	t, err := time.ParseDuration("7h43m")
-	if err != nil {
-		return err.Error()
-	}
 	db := helpers.GetDBQueries()
 	tasks, err := db.GetTasks(context.TODO())
 	if err != nil {
@@ -104,7 +104,7 @@ func (m RootPage) View() string {
 	width, _, _ := term.GetSize(int(os.Stdout.Fd()))
 	statusKey := statusStyle.Render("POMODO")
 	tasksRemaining := tasksRemainingStyle.Render(fmt.Sprintf("%v tasks", len(tasks)))
-	allocatedTime := allocatedTimeStyle.Render(t.String())
+	allocatedTime := allocatedTimeStyle.Render(m.AllocatedTime.String())
 	statusMessage := statusText.Render(fmt.Sprintf(" %T: %v ", m.Msg, m.Msg))
 	statusVal := statusText.
 		Width(width - w(statusKey) - w(tasksRemaining) - w(allocatedTime) - w(statusMessage)).

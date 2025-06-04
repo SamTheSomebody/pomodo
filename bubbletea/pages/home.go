@@ -15,6 +15,7 @@ type HomePage struct {
 func NewHomePage(keymap *bubbletea.KeyMap) HomePage {
 	m := HomePage{
 		List: list.New([]list.Item{
+			button.New("Allocate Time", func() (tea.Model, tea.Cmd) { return NewAllocateTimePage(keymap), nil }),
 			button.New("Start Timer", func() (tea.Model, tea.Cmd) { return NewConfigureTimerPage(nil, keymap), nil }),
 			button.New("View Tasks", func() (tea.Model, tea.Cmd) { return NewViewTasksPage(keymap), nil }),
 			button.New("Add Task", func() (tea.Model, tea.Cmd) { return NewEditTaskPage(nil, keymap), nil }),

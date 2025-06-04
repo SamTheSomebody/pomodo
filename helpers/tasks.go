@@ -4,12 +4,24 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"pomodo/internal/database"
 	"strconv"
 	"time"
 
 	"github.com/google/uuid"
+
+	"pomodo/internal/database"
 )
+
+type RawTask struct {
+	ID           string
+	Name         string
+	Summary      string
+	DueAt        string
+	TimeEstimate string
+	TimeSpent    string
+	Enthusiasm   string
+	Priority     string
+}
 
 func GetTask(context context.Context, value string) database.Task {
 	db := GetDBQueries()
@@ -24,17 +36,6 @@ func GetTask(context context.Context, value string) database.Task {
 		log.Fatalf("SQL error: %v", err)
 	}
 	return task
-}
-
-type RawTask struct {
-	ID           string
-	Name         string
-	Summary      string
-	DueAt        string
-	TimeEstimate string
-	TimeSpent    string
-	Enthusiasm   string
-	Priority     string
 }
 
 func Raw(task database.Task) RawTask {
@@ -148,7 +149,7 @@ func EditTask(task RawTask) error {
 		return fmt.Errorf("error validating task: %v", err)
 	}
 	db := GetDBQueries()
-	params := database.UpdateTaskParams{
+	params := database.SetTaskParams{
 		Name:                t.Name,
 		Summary:             t.Summary,
 		DueAt:               t.DueAt,
@@ -156,6 +157,6 @@ func EditTask(task RawTask) error {
 		Priority:            t.Priority,
 		Enthusiasm:          t.Enthusiasm,
 	}
-	_, err = db.UpdateTask(context.TODO(), params)
+	_, err = db.SetTask(context.TODO(), params)
 	return err
 }

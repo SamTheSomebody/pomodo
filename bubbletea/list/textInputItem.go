@@ -5,6 +5,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// TODO create a time input field that validates time
+
 type TextInputItem struct {
 	Input    textinput.Model
 	OldValue string
