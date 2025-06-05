@@ -1,13 +1,11 @@
 package list
 
 import (
-	"fmt"
+	"pomodo/bubbletea"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
-
-	"pomodo/bubbletea"
 )
 
 const buffer = 0
@@ -85,8 +83,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() string {
 	b := strings.Builder{}
-	b.WriteString(fmt.Sprintf("List with %v items, Keymap pointer: %p, IsItemSelected: %v, Index: %v, Select Enabled: %v, Submit Enabled: %v\n",
-		len(m.Items), m.Keys, m.IsItemSelected, m.Index, m.Keys.Select.Enabled(), m.Keys.Submit.Enabled()))
 	for i, item := range m.Items {
 		b.WriteString(m.Styles.Render(item, m.Index == i) + "\n")
 	}

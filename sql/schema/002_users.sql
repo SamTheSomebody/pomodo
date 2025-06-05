@@ -8,7 +8,7 @@ CREATE TABLE users (
   priority_weight FLOAT DEFAULT 0.3 NOT NULl,
   enthusiasm_weight FLOAT DEFAULT 0.2 NOT NULL,
   first_task_weight FLOAT DEFAULT 0.4 NOT NULL,
-  due_date_daily_weight FLOAT DEFAULT 0.2 NOT NULL
+  due_date_daily_weight FLOAT DEFAULT 0.2 NOT NULL -- Should this be a negative number?
 );
 
 -- +goose Down

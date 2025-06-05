@@ -3,7 +3,10 @@ package pages
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
+	"pomodo/bubbletea"
+	"pomodo/helpers"
 	"reflect"
 	"strings"
 	"time"
@@ -13,9 +16,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"golang.org/x/term"
-
-	"pomodo/bubbletea"
-	"pomodo/helpers"
 )
 
 type RootPage struct {
@@ -30,9 +30,18 @@ type RootPage struct {
 
 func NewRootPage() RootPage {
 	keymap := bubbletea.DefaultKeymap()
+	var page tea.Model
+	page = NewHomePage(&keymap)
+	users, err := helpers.GetDBQueries().GetUsers(context.TODO())
+	if err != nil {
+		log.Fatal(err)
+	}
+	if len(users) < 1 {
+		page = NewAddUserPage(&keymap)
+	}
 	allocatedTime, err := helpers.GetAllocatedTime()
 	return RootPage{
-		Pages:         []tea.Model{NewHomePage(&keymap)},
+		Pages:         []tea.Model{page},
 		Keymap:        &keymap,
 		Help:          help.New(),
 		AllocatedTime: allocatedTime,
@@ -54,7 +63,7 @@ func (m RootPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		if key.Matches(msg, m.Keymap.Return) {
 			if len(m.Pages) < 2 {
-				return NewQuitPage(), nil
+				return m, bubbletea.NewPageCmd(func() (tea.Model, tea.Cmd) { return NewQuitPage(), nil })
 			}
 			m.Pages = m.Pages[:len(m.Pages)-1]
 			m.Pages[len(m.Pages)-1].Init()

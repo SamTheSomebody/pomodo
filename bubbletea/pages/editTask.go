@@ -3,19 +3,18 @@ package pages
 import (
 	"context"
 	"fmt"
-	"strings"
-	"time"
-
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/google/uuid"
-
 	"pomodo/bubbletea"
 	"pomodo/bubbletea/button"
 	"pomodo/bubbletea/list"
 	"pomodo/bubbletea/slider"
 	"pomodo/helpers"
 	"pomodo/internal/database"
+	"strings"
+	"time"
+
+	"github.com/charmbracelet/bubbles/textinput"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/google/uuid"
 )
 
 /* Visual
@@ -58,12 +57,15 @@ func NewEditTaskPage(taskID *uuid.UUID, keymap *bubbletea.Keymap) EditTaskPage {
 		HasTask: hasTask,
 	}
 
-	values := []struct{ prompt, placeholder, value string }{
-		{"Name:          ", "Task Name", m.Task.Name},
-		{"Summary:       ", "Write a summary... ", m.Task.Summary},
-		{"Due At:        ", "YYYY-MM-DD HH:MM", helpers.ParseTime(m.Task.DueAt)},
-		{"Time Estimate: ", "e.g. 1h30m", helpers.ParseDuration(m.Task.TimeEstimateSeconds)},
-		{"Time Spent:    ", "e.g. 2h15m30s", helpers.ParseDuration(m.Task.TimeSpentSeconds)},
+	values := []struct {
+		prompt, placeholder, value string
+		validate                   func(string) error
+	}{
+		{"Name:          ", "Task Name", m.Task.Name, func(string) error { return nil }},
+		{"Summary:       ", "Write a summary... ", m.Task.Summary, func(string) error { return nil }},
+		{"Due At:        ", "YYYY-MM-DD HH:MM", helpers.ParseTime(m.Task.DueAt), helpers.ValidateTime},
+		{"Time Estimate: ", "e.g. 1h30m", helpers.ParseDuration(m.Task.TimeEstimateSeconds), helpers.ValidateDuration},
+		{"Time Spent:    ", "e.g. 2h15m30s", helpers.ParseDuration(m.Task.TimeSpentSeconds), helpers.ValidateDuration},
 	}
 
 	items := make([]list.Item, len(values))
@@ -73,6 +75,7 @@ func NewEditTaskPage(taskID *uuid.UUID, keymap *bubbletea.Keymap) EditTaskPage {
 		input.SetValue(v.value)
 		input.Placeholder = v.placeholder
 		input.Prompt = v.prompt
+		input.Validate = v.validate
 		input.Width = 50 // TODO make this a sane automated size
 		items[i] = list.TextInputItem{Input: input}
 	}
@@ -80,7 +83,7 @@ func NewEditTaskPage(taskID *uuid.UUID, keymap *bubbletea.Keymap) EditTaskPage {
 	items = append(items,
 		slider.New("Priority:      ", int(m.Task.Priority)),
 		slider.New("Enthusiasm:    ", int(m.Task.Enthusiasm)),
-		button.New("Confirm", confirmButton(&m)))
+		button.New("Confirm", func() (tea.Model, tea.Cmd) { return m.Submit() }))
 	m.List = list.New(items, keymap)
 	return m
 }
@@ -94,7 +97,6 @@ func (m EditTaskPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m EditTaskPage) Submit() (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
 	name := m.List.Items[0].(list.TextInputItem).Input.Value()
 	summary := m.List.Items[1].(list.TextInputItem).Input.Value()
 	dueAt, err := time.Parse("DD/MM/YY", m.List.Items[2].(list.TextInputItem).Input.Value())
@@ -130,13 +132,7 @@ func (m EditTaskPage) Submit() (tea.Model, tea.Cmd) {
 	if err != nil {
 		return m, bubbletea.ErrCmd(err)
 	}
-	return m, cmd // TODO close page command
-}
-
-func confirmButton(m *EditTaskPage) func() (tea.Model, tea.Cmd) {
-	return func() (tea.Model, tea.Cmd) {
-		return m.Submit()
-	}
+	return m, bubbletea.NewPageCmd(func() (tea.Model, tea.Cmd) { return NewHomePage(m.List.Keys), nil })
 }
 
 func (m EditTaskPage) View() string {

@@ -1,10 +1,8 @@
 Add task page
-- Confirm don't send us back to the home page
 - Fix Time estimate (don't think it sets to seconds)
 - Fix Due date (better format and saving)
 - What's the plan for time spent (currently not in use)
 New user page
-- Should be the first page if no user row is found
 Quit Page
 - Take out of alt mode
 - Close instantly

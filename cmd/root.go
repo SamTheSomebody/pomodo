@@ -24,18 +24,14 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"pomodo/helpers"
-	"pomodo/pages"
+	"pomodo/bubbletea/pages"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-var (
-	cfgFile string
-	task    helpers.RawTask
-)
+var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -44,8 +40,7 @@ var rootCmd = &cobra.Command{
 	Long: `Pomodo is a CLI application that keeps things deceptively simple.
 It has many powerful futures that are totally optional.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		s := pages.NewState()
-		p := tea.NewProgram(pages.InitialHomeModel(s), tea.WithAltScreen())
+		p := tea.NewProgram(pages.NewRootPage(), tea.WithAltScreen())
 		if _, err := p.Run(); err != nil {
 			fmt.Printf("Alas, there's been an error: %v", err)
 			os.Exit(1)

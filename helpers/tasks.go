@@ -3,12 +3,11 @@ package helpers
 import (
 	"context"
 	"log"
+	"pomodo/internal/database"
 	"strconv"
 	"time"
 
 	"github.com/google/uuid"
-
-	"pomodo/internal/database"
 )
 
 func GetTask(context context.Context, value string) database.Task {
@@ -53,4 +52,14 @@ func ValidateRange(value string) int64 {
 		return 1
 	}
 	return int64(i)
+}
+
+func ValidateDuration(s string) error {
+	_, err := time.ParseDuration(s)
+	return err
+}
+
+func ValidateTime(s string) error {
+	_, err := time.Parse("YYYY-MM-DD", s)
+	return err
 }

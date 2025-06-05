@@ -6,6 +6,9 @@ RETURNING *;
 -- name: GetUser :one
 SELECT * FROM users WHERE id = ?;
 
+-- name: GetUsers :many
+SELECT * FROM users;
+
 -- name: GetFirstUser :one
 SELECT * FROM users ORDER BY updated_at;
 
