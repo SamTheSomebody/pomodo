@@ -20,7 +20,7 @@ import (
 
 type RootPage struct {
 	Pages         []tea.Model
-	KeyMap        bubbletea.KeyMap
+	Keymap        *bubbletea.Keymap
 	Log           string
 	Msg           tea.Msg
 	Err           error
@@ -29,11 +29,11 @@ type RootPage struct {
 }
 
 func NewRootPage() RootPage {
-	keymap := bubbletea.DefaultKeyMap()
+	keymap := bubbletea.DefaultKeymap()
 	allocatedTime, err := helpers.GetAllocatedTime()
 	return RootPage{
 		Pages:         []tea.Model{NewHomePage(&keymap)},
-		KeyMap:        keymap,
+		Keymap:        &keymap,
 		Help:          help.New(),
 		AllocatedTime: allocatedTime,
 		Err:           err,
@@ -49,44 +49,45 @@ func (m RootPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if key.Matches(msg, m.KeyMap.ForceQuit) {
+		if key.Matches(msg, m.Keymap.ForceQuit) {
 			return m, tea.Quit
 		}
-		if key.Matches(msg, m.KeyMap.Return) {
+		if key.Matches(msg, m.Keymap.Return) {
 			if len(m.Pages) < 2 {
-				return NewQuitPage(), nil // TODO new page command
+				return NewQuitPage(), nil
 			}
 			m.Pages = m.Pages[:len(m.Pages)-1]
 			m.Pages[len(m.Pages)-1].Init()
-			return m, nil
+			return m, cmd
 		}
 	case bubbletea.NewPageMsg:
 		m.Err = nil
 		p, cmd := msg.Constructor()
-		m.Log = fmt.Sprintf("Add page %T to pages [len: %v]", p, len(m.Pages))
+		m.Log = fmt.Sprintf("Add page '%T' to pages [len: %v]", p, len(m.Pages))
 		if reflect.TypeOf(p) == reflect.TypeOf(m.Pages[len(m.Pages)-1]) {
 			m.Pages[len(m.Pages)-1] = p
 			return m, cmd
 		}
 		switch p.(type) {
 		case HomePage:
+			m.Keymap.SetHomeKeysEnabled(true)
 			m.Pages = m.Pages[:1]
 			m.Pages[0] = p
 			return m, cmd
 		default:
+			m.Keymap.SetHomeKeysEnabled(false)
 			m.Pages = append(m.Pages, p)
 			return m, cmd
 		}
 	case bubbletea.ErrMsg:
 		m.Err = msg.Err
-		return m, nil
+		return m, cmd
 	case bubbletea.LogMsg:
 		m.Log = msg.Message
-		return m, nil
-	case bubbletea.EnableNavigationMsg:
-		m.KeyMap.EnableNavigation(msg.Enabled)
-		m.Log = fmt.Sprintf("Nagivtaion Enabled: %v", msg.Enabled)
-		return m, nil
+		return m, cmd
+	case bubbletea.ItemSelectMsg:
+		m.Keymap.SetNavigationEnabled(!msg.IsSelected)
+		// Don't return, the children still need this
 	}
 	m.Pages[len(m.Pages)-1], cmd = m.Pages[len(m.Pages)-1].Update(msg)
 	return m, cmd
@@ -122,12 +123,7 @@ func (m RootPage) View() string {
 	b.WriteString("\n" + m.Pages[len(m.Pages)-1].View() + "\n")
 
 	// Footer
-	keys := []key.Binding{
-		m.KeyMap.Return,
-		m.KeyMap.ForceQuit,
-		m.KeyMap.Select,
-	}
-	b.WriteString("\n" + m.Help.ShortHelpView(keys))
+	b.WriteString("\n" + m.Keymap.Help())
 	if m.Err != nil {
 		b.WriteString("\n" + errorStyle.Render(m.Err.Error()))
 	}

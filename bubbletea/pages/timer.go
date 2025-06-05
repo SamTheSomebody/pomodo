@@ -12,12 +12,12 @@ import (
 	"github.com/google/uuid"
 
 	"pomodo/bubbletea"
-	"pomodo/bubbletea/task"
 	"pomodo/helpers"
+	"pomodo/internal/database"
 )
 
 type TimerPage struct {
-	Task            tea.Model
+	Task            *database.Task
 	Timer           timer.Model
 	Progress        progress.Model
 	CurrentProgress float64
@@ -26,24 +26,21 @@ type TimerPage struct {
 
 // TODO For some reason this doesn't start when initialized, and runs twice as fast when first manually started
 func NewTimerPage(duration time.Duration, taskID *uuid.UUID) TimerPage {
-	var t tea.Model
+	var task database.Task
 	if taskID != nil {
-		dbTask, err := helpers.GetDBQueries().GetTaskByID(context.TODO(), taskID)
+		var err error
+		task, err = helpers.GetDBQueries().GetTaskByID(context.TODO(), taskID)
 		if err != nil {
 			log.Fatal(err)
 		}
-		rawTask := helpers.Raw(dbTask)
-		t = task.New(&rawTask)
 	}
-
-	m := TimerPage{
-		Task:            t,
+	return TimerPage{
+		Task:            &task,
 		Timer:           timer.New(duration),
 		Progress:        progress.New(),
 		CurrentProgress: 0,
 		Timeout:         duration,
 	}
-	return m
 }
 
 func OnTimerButtonClick(duration time.Duration, TaskID *uuid.UUID) func() (tea.Model, tea.Cmd) {
@@ -86,7 +83,7 @@ func (m TimerPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, m.Timer.Toggle()
 		case "enter":
 			if m.Timer.Timedout() {
-				return NewHomePage(&bubbletea.KeyMap{}), nil // TODO add time to Task // TODO new page command
+				return NewHomePage(&bubbletea.Keymap{}), nil // TODO add time to Task // TODO new page command
 			}
 		}
 	}
@@ -96,7 +93,7 @@ func (m TimerPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m TimerPage) View() string {
 	b := strings.Builder{}
 	if m.Task != nil {
-		b.WriteString(m.Task.View())
+		b.WriteString(m.Task.Name + ", " + m.Task.Summary)
 	}
 	b.WriteString(m.Timer.Timeout.String())
 	b.WriteString(m.Progress.ViewAs(m.CurrentProgress) + "\n")

@@ -17,7 +17,7 @@ func (s Styles) Render(i Item, isFocused bool) string {
 func DefaultStyle() Styles {
 	return Styles{
 		ActiveItem: lipgloss.NewStyle().Bold(true).Italic(true).
-			PaddingLeft(2).Background(lipgloss.Color("#A550DF")),
-		InactiveItem: lipgloss.NewStyle(),
+			Background(lipgloss.Color("#A550DF")),
+		InactiveItem: lipgloss.NewStyle().Padding(0, 2).Foreground(lipgloss.Color("#343433")),
 	}
 }

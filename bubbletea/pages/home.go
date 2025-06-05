@@ -12,7 +12,7 @@ type HomePage struct {
 	List list.Model
 }
 
-func NewHomePage(keymap *bubbletea.KeyMap) HomePage {
+func NewHomePage(keymap *bubbletea.Keymap) HomePage {
 	m := HomePage{
 		List: list.New([]list.Item{
 			button.New("Allocate Time", func() (tea.Model, tea.Cmd) { return NewAllocateTimePage(keymap), nil }),

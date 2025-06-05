@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -12,6 +13,7 @@ import (
 	"pomodo/bubbletea"
 	"pomodo/bubbletea/button"
 	"pomodo/bubbletea/list"
+	"pomodo/bubbletea/slider"
 	"pomodo/helpers"
 	"pomodo/internal/database"
 )
@@ -28,13 +30,13 @@ Editing Task: (ID)
 */
 
 type EditTaskPage struct {
-	Task    helpers.RawTask
+	Task    database.Task
 	List    list.Model
 	Focus   int
 	HasTask bool
 }
 
-func NewEditTaskPage(taskID *uuid.UUID, keymap *bubbletea.KeyMap) EditTaskPage {
+func NewEditTaskPage(taskID *uuid.UUID, keymap *bubbletea.Keymap) EditTaskPage {
 	hasTask := taskID != nil
 	var task database.Task
 	if !hasTask {
@@ -52,21 +54,19 @@ func NewEditTaskPage(taskID *uuid.UUID, keymap *bubbletea.KeyMap) EditTaskPage {
 		}
 	}
 	m := EditTaskPage{
-		Task:    helpers.Raw(task),
+		Task:    task,
 		HasTask: hasTask,
 	}
 
 	values := []struct{ prompt, placeholder, value string }{
 		{"Name:          ", "Task Name", m.Task.Name},
 		{"Summary:       ", "Write a summary... ", m.Task.Summary},
-		{"Due At:        ", "YYYY-MM-DD HH:MM", m.Task.DueAt},
-		{"Time Estimate: ", "e.g. 1h30m", m.Task.TimeEstimate},
-		{"Time Spent:    ", "e.g. 2h15m30s", m.Task.TimeSpent},
-		{"Priority:      ", "1-10", m.Task.Priority},
-		{"Enthusiasm:    ", "1-10", m.Task.Enthusiasm},
+		{"Due At:        ", "YYYY-MM-DD HH:MM", helpers.ParseTime(m.Task.DueAt)},
+		{"Time Estimate: ", "e.g. 1h30m", helpers.ParseDuration(m.Task.TimeEstimateSeconds)},
+		{"Time Spent:    ", "e.g. 2h15m30s", helpers.ParseDuration(m.Task.TimeSpentSeconds)},
 	}
 
-	items := make([]list.Item, len(values)+1)
+	items := make([]list.Item, len(values))
 
 	for i, v := range values {
 		input := textinput.New()
@@ -77,8 +77,10 @@ func NewEditTaskPage(taskID *uuid.UUID, keymap *bubbletea.KeyMap) EditTaskPage {
 		items[i] = list.TextInputItem{Input: input}
 	}
 
-	confirmButton := button.New("Confirm", confirmButton(&m))
-	items[len(values)] = confirmButton
+	items = append(items,
+		slider.New("Priority:      ", int(m.Task.Priority)),
+		slider.New("Enthusiasm:    ", int(m.Task.Enthusiasm)),
+		button.New("Confirm", confirmButton(&m)))
 	m.List = list.New(items, keymap)
 	return m
 }
@@ -88,34 +90,47 @@ func (m EditTaskPage) Init() tea.Cmd {
 }
 
 func (m EditTaskPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	model, cmd := m.List.Update(msg)
-	switch t := model.(type) {
-	case list.Model:
-		m.List = t
-	default:
-		return model, cmd
-	}
-	return m, nil
+	return m.List.Update(msg)
 }
 
 func (m EditTaskPage) Submit() (tea.Model, tea.Cmd) {
-	m.Task.Name = m.List.Items[0].(list.TextInputItem).Input.Value()
-	m.Task.Summary = m.List.Items[1].(list.TextInputItem).Input.Value()
-	m.Task.DueAt = m.List.Items[2].(list.TextInputItem).Input.Value()
-	m.Task.TimeEstimate = m.List.Items[3].(list.TextInputItem).Input.Value()
-	m.Task.TimeSpent = m.List.Items[4].(list.TextInputItem).Input.Value()
-	m.Task.Priority = m.List.Items[5].(list.TextInputItem).Input.Value()
-	m.Task.Enthusiasm = m.List.Items[6].(list.TextInputItem).Input.Value()
-	var err error
+	var cmd tea.Cmd
+	name := m.List.Items[0].(list.TextInputItem).Input.Value()
+	summary := m.List.Items[1].(list.TextInputItem).Input.Value()
+	dueAt, err := time.Parse("DD/MM/YY", m.List.Items[2].(list.TextInputItem).Input.Value())
+	timeEstimate, err := time.ParseDuration(m.List.Items[3].(list.TextInputItem).Input.Value())
+	// TODO timeSpent, err := time.ParseDuration(m.List.Items[4].(list.TextInputItem).Input.Value())
+	priority := m.List.Items[5].(slider.Model).Value
+	enthusiasm := m.List.Items[6].(slider.Model).Value
+
+	db := helpers.GetDBQueries()
 	if m.HasTask {
-		err = helpers.EditTask(m.Task)
+		_, err = db.SetTask(context.TODO(), database.SetTaskParams{
+			ID:                  m.Task.ID,
+			Name:                name,
+			Summary:             summary,
+			DueAt:               dueAt,
+			TimeEstimateSeconds: int64(timeEstimate.Seconds()),
+			// TODO TimeSpentSeconds:    int64(timeSpent.Seconds()),
+			Priority:   int64(priority),
+			Enthusiasm: int64(enthusiasm),
+		})
 	} else {
-		err = helpers.AddTask(m.Task)
+		_, err = db.CreateTask(context.TODO(), database.CreateTaskParams{
+			ID:                  m.Task.ID,
+			Name:                name,
+			Summary:             summary,
+			DueAt:               dueAt,
+			TimeEstimateSeconds: int64(timeEstimate.Seconds()),
+			// TODO TimeSpentSeconds:    int64(timeSpent.Seconds()),
+			Priority:   int64(priority),
+			Enthusiasm: int64(enthusiasm),
+		})
 	}
 	if err != nil {
 		return m, bubbletea.ErrCmd(err)
 	}
-	return m, nil // TODO close page command
+	return m, cmd // TODO close page command
 }
 
 func confirmButton(m *EditTaskPage) func() (tea.Model, tea.Cmd) {

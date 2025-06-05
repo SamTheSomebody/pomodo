@@ -19,10 +19,14 @@ type AllocateTime struct {
 	List list.Model
 }
 
-func NewAllocateTimePage(keymap *bubbletea.KeyMap) AllocateTime {
+func NewAllocateTimePage(keymap *bubbletea.Keymap) AllocateTime {
 	m := AllocateTime{}
 	t := textinput.New()
 	t.Prompt = "Allocate Time: "
+	t.Validate = func(s string) error {
+		_, err := time.ParseDuration(s)
+		return err
+	}
 	m.List = list.New([]list.Item{
 		list.NewTextInput(t),
 		button.New("Confirm", func() (tea.Model, tea.Cmd) {

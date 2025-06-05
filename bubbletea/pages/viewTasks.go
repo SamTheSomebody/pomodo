@@ -22,10 +22,10 @@ Name |
 
 type ViewTasksPage struct {
 	Table  table.Model
-	KeyMap *bubbletea.KeyMap
+	KeyMap *bubbletea.Keymap
 }
 
-func NewViewTasksPage(keymap *bubbletea.KeyMap) tea.Model {
+func NewViewTasksPage(keymap *bubbletea.Keymap) tea.Model {
 	db := helpers.GetDBQueries()
 	tasks, err := db.GetTasks(context.Background())
 	if err != nil {
@@ -33,13 +33,12 @@ func NewViewTasksPage(keymap *bubbletea.KeyMap) tea.Model {
 	}
 	rows := make([]table.Row, len(tasks))
 	for i, task := range tasks {
-		raw := helpers.Raw(task)
 		rows[i] = []string{
-			raw.ID,
-			raw.Name,
-			raw.Summary,
-			raw.DueAt,
-			raw.TimeEstimate,
+			task.ID.(string),
+			task.Name,
+			task.Summary,
+			helpers.ParseTime(task.DueAt),
+			helpers.ParseDuration(task.TimeEstimateSeconds),
 		}
 	}
 	t := table.New(

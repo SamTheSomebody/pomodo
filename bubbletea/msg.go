@@ -35,13 +35,13 @@ func LogCmd(message string) tea.Cmd {
 	}
 }
 
-// Focus Message for enabling/disabling navigation
-type EnableNavigationMsg struct {
-	Enabled bool
+// Message for enabling/disabling navigation
+type ItemSelectMsg struct {
+	IsSelected bool
 }
 
-func EnableNavigationCmd(enabled bool) tea.Cmd {
+func ItemSelectCmd(isSelected bool) tea.Cmd {
 	return func() tea.Msg {
-		return EnableNavigationMsg{Enabled: enabled}
+		return ItemSelectMsg{IsSelected: isSelected}
 	}
 }

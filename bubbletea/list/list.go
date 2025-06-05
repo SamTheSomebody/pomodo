@@ -16,11 +16,11 @@ type Model struct {
 	Index          int
 	Items          []Item
 	IsItemSelected bool
-	Keys           *bubbletea.KeyMap
+	Keys           *bubbletea.Keymap
 	Styles         Styles
 }
 
-func New(items []Item, keymap *bubbletea.KeyMap) Model {
+func New(items []Item, keymap *bubbletea.Keymap) Model {
 	m := Model{
 		Items:  items,
 		Keys:   keymap,
@@ -34,58 +34,59 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
+	case bubbletea.ItemSelectMsg:
+		m.IsItemSelected = msg.IsSelected
+		model, cmd := m.Items[m.Index].Update(msg)
+		m.Items[m.Index] = model.(Item)
+		return m, cmd
 	case tea.KeyMsg:
-		if m.IsItemSelected {
-			if key.Matches(msg, m.Keys.Cancel) {
-				m.IsItemSelected = false
-				m.Items[m.Index], _ = m.Items[m.Index].OnCancel()
-				return m, bubbletea.EnableNavigationCmd(true)
-			}
-			if key.Matches(msg, m.Keys.Submit) {
-				m.IsItemSelected = false
-				m.Items[m.Index], _ = m.Items[m.Index].OnSubmit()
-				return m, bubbletea.EnableNavigationCmd(true)
-			}
-			model, _ := m.Items[m.Index].Update(msg)
-			m.Items[m.Index] = model.(Item)
-			return m, bubbletea.EnableNavigationCmd(false)
+		if key.Matches(msg, m.Keys.Cancel) {
+			var cmd tea.Cmd
+			m.Items[m.Index], cmd = m.Items[m.Index].OnCancel()
+			return m, cmd
+		}
+		if key.Matches(msg, m.Keys.Submit) {
+			var cmd tea.Cmd
+			m.Items[m.Index], cmd = m.Items[m.Index].OnSubmit()
+			return m, cmd
 		}
 		if key.Matches(msg, m.Keys.CursorUp) {
 			m.Index += len(m.Items) - 1
 			m.Index %= len(m.Items)
-			return m, nil
+			return m, cmd
 		}
 		if key.Matches(msg, m.Keys.CursorDown) {
 			m.Index++
 			m.Index %= len(m.Items)
-			return m, nil
+			return m, cmd
 		}
 		if key.Matches(msg, m.Keys.GoToEnd) {
 			m.Index = len(m.Items) - 1
-			return m, nil
+			return m, cmd
 		}
 		if key.Matches(msg, m.Keys.GoToStart) {
 			m.Index = 0
-			return m, nil
+			return m, cmd
 		}
 		if key.Matches(msg, m.Keys.Select) {
-			m.IsItemSelected = true
-			var cmd tea.Cmd
 			m.Items[m.Index], cmd = m.Items[m.Index].OnSelect()
-			if cmd != nil {
-				return m, cmd
-			}
-			return m, bubbletea.EnableNavigationCmd(false)
+			return m, cmd
 		}
 	}
-	return m, nil
+	if m.IsItemSelected {
+		var model tea.Model
+		model, cmd = m.Items[m.Index].Update(msg)
+		m.Items[m.Index] = model.(Item)
+	}
+	return m, cmd
 }
 
 func (m Model) View() string {
 	b := strings.Builder{}
-	b.WriteString(fmt.Sprintf("List with %v items, IsItemSelected: %v, Index: %v, Select Enabled: %v, Submit Enabled: %v\n",
-		len(m.Items), m.IsItemSelected, m.Index, m.Keys.Select.Enabled(), m.Keys.Submit.Enabled()))
+	b.WriteString(fmt.Sprintf("List with %v items, Keymap pointer: %p, IsItemSelected: %v, Index: %v, Select Enabled: %v, Submit Enabled: %v\n",
+		len(m.Items), m.Keys, m.IsItemSelected, m.Index, m.Keys.Select.Enabled(), m.Keys.Submit.Enabled()))
 	for i, item := range m.Items {
 		b.WriteString(m.Styles.Render(item, m.Index == i) + "\n")
 	}

@@ -1,10 +1,11 @@
 package task
 
 import (
-	"pomodo/helpers"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"pomodo/internal/database"
 )
 
 /*
@@ -17,7 +18,7 @@ import (
 
 // TODO width options
 type Model struct {
-	task          *helpers.RawTask
+	task          *database.Task
 	isInLineView  bool
 	hideEnthusasm bool
 	hidePriority  bool
@@ -27,7 +28,7 @@ type Model struct {
 	showID        bool
 }
 
-func New(task *helpers.RawTask, opts ...Option) Model {
+func New(task *database.Task, opts ...Option) Model {
 	return Model{
 		task: task,
 	}
@@ -94,7 +95,7 @@ func (m Model) View() string {
 
 func (m Model) fullView() string {
 	b := strings.Builder{}
-	if m.showID {
+	/*if m.showID {
 		b.WriteString(m.task.ID + "\n")
 	}
 	b.WriteString(m.task.Name + "\n")
@@ -107,7 +108,7 @@ func (m Model) fullView() string {
 	}
 	if !m.hideTimes {
 		b.WriteString("Est: " + m.task.TimeEstimate + "(" + m.task.TimeSpent + " spent)\n")
-	}
+	}*/
 	// TODO add priority and enthusasm
 	return b.String()
 }

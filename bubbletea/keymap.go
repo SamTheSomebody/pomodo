@@ -1,10 +1,11 @@
 package bubbletea
 
 import (
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 )
 
-type KeyMap struct {
+type Keymap struct {
 	CursorUp   key.Binding
 	CursorDown key.Binding
 	NextPage   key.Binding
@@ -17,12 +18,13 @@ type KeyMap struct {
 	Submit key.Binding
 	Cancel key.Binding
 
-	Quit      key.Binding
 	ForceQuit key.Binding
+
+	help help.Model
 }
 
-func DefaultKeyMap() KeyMap {
-	return KeyMap{
+func DefaultKeymap() Keymap {
+	return Keymap{
 		// Browsing.
 		CursorUp: key.NewBinding(
 			key.WithKeys("up", "k"),
@@ -69,28 +71,51 @@ func DefaultKeyMap() KeyMap {
 			key.WithDisabled(),
 		),
 
-		// Quitting.
-		Quit: key.NewBinding(
-			key.WithKeys("q", "esc"),
-			key.WithHelp("q", "quit"),
-		),
 		ForceQuit: key.NewBinding(key.WithKeys("ctrl+c")),
+
+		help: help.New(),
 	}
 }
 
-// Disables navigation if item is focused
-func (k *KeyMap) EnableNavigation(b bool) {
-	k.Submit.SetEnabled(!b)
-	k.Cancel.SetEnabled(!b)
+// Toggle navigation if item is focused
+func (k *Keymap) SetNavigationEnabled(enabled bool) {
+	k.Submit.SetEnabled(!enabled)
+	k.Cancel.SetEnabled(!enabled)
 
-	k.Select.SetEnabled(b)
-	k.Return.SetEnabled(b)
+	k.Select.SetEnabled(enabled)
+	k.Return.SetEnabled(enabled)
 
-	k.CursorUp.SetEnabled(b)
-	k.CursorDown.SetEnabled(b)
-	k.NextPage.SetEnabled(b)
-	k.PrevPage.SetEnabled(b)
-	k.GoToStart.SetEnabled(b)
-	k.GoToEnd.SetEnabled(b)
-	k.Quit.SetEnabled(b)
+	k.CursorUp.SetEnabled(enabled)
+	k.CursorDown.SetEnabled(enabled)
+	k.NextPage.SetEnabled(enabled)
+	k.PrevPage.SetEnabled(enabled)
+	k.GoToStart.SetEnabled(enabled)
+	k.GoToEnd.SetEnabled(enabled)
+}
+
+func (k *Keymap) SetHomeKeysEnabled(enabled bool) {
+	if enabled {
+		k.Return.SetKeys("esc", "q")
+		k.Return.SetHelp("esc/q", "quit")
+	} else {
+		k.Return.SetKeys("esc")
+		k.Return.SetHelp("esc", "return")
+	}
+}
+
+func (k *Keymap) Help() string {
+	keys := []key.Binding{
+		k.CursorUp,
+		k.CursorDown,
+		k.NextPage,
+		k.PrevPage,
+		k.GoToStart,
+		k.GoToEnd,
+		k.Return,
+		k.Select,
+		k.Submit,
+		k.Cancel,
+		k.ForceQuit,
+	}
+	return k.help.ShortHelpView(keys)
 }

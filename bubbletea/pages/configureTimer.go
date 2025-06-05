@@ -19,7 +19,7 @@ type ConfigureTimerPage struct {
 	Duration time.Duration
 }
 
-func NewConfigureTimerPage(t *uuid.UUID, keymap *bubbletea.KeyMap) ConfigureTimerPage {
+func NewConfigureTimerPage(t *uuid.UUID, keymap *bubbletea.Keymap) ConfigureTimerPage {
 	m := ConfigureTimerPage{
 		TaskID: t,
 	}
@@ -27,6 +27,10 @@ func NewConfigureTimerPage(t *uuid.UUID, keymap *bubbletea.KeyMap) ConfigureTime
 	timerInput.Prompt = "Duration: "
 	timerInput.Placeholder = "XXh XXm XXs"
 	timerInput.Width = 50
+	timerInput.Validate = func(s string) error {
+		_, err := time.ParseDuration(s)
+		return err
+	}
 	confirmButton := button.New("Confirm", OnTimerButtonClick(m.Duration, m.TaskID))
 	// TODO Task select
 	list := list.New([]list.Item{list.NewTextInput(timerInput), confirmButton}, keymap)
