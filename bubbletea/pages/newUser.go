@@ -20,7 +20,7 @@ type AddUserPage struct {
 	UserID uuid.UUID
 }
 
-func NewAddUserPage(keymap *bubbletea.Keymap) tea.Model {
+func NewAddUserPage() tea.Model {
 	m := AddUserPage{}
 	input := textinput.New()
 	input.Prompt = "Allocated time:          "
@@ -35,7 +35,7 @@ func NewAddUserPage(keymap *bubbletea.Keymap) tea.Model {
 		list.NewTextInput(input),
 		button.New("Confirm", m.Submit),
 	}
-	m.List = list.New(items, keymap)
+	m.List = list.New(items)
 	return m
 }
 
@@ -84,5 +84,5 @@ func (m *AddUserPage) Submit() (tea.Model, tea.Cmd) {
 	if err != nil {
 		return m, bubbletea.ErrCmd(err)
 	}
-	return m, bubbletea.NewPageCmd(func() (tea.Model, tea.Cmd) { return NewHomePage(m.List.(list.Model).Keys), nil })
+	return m, bubbletea.NewPageCmd(func() (tea.Model, tea.Cmd) { return NewHomePage(), nil })
 }

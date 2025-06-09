@@ -3,6 +3,8 @@ package pages
 import (
 	"context"
 	"log"
+	"pomodo/helpers"
+	"pomodo/internal/database"
 	"strings"
 	"time"
 
@@ -10,10 +12,6 @@ import (
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/google/uuid"
-
-	"pomodo/bubbletea"
-	"pomodo/helpers"
-	"pomodo/internal/database"
 )
 
 type TimerPage struct {
@@ -83,7 +81,7 @@ func (m TimerPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, m.Timer.Toggle()
 		case "enter":
 			if m.Timer.Timedout() {
-				return NewHomePage(&bubbletea.Keymap{}), nil // TODO add time to Task // TODO new page command
+				return NewHomePage(), nil // TODO add time to Task // TODO new page command
 			}
 		}
 	}

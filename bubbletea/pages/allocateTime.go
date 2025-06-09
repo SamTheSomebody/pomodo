@@ -3,23 +3,22 @@ package pages
 import (
 	"context"
 	"fmt"
-	"time"
-
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-
 	"pomodo/bubbletea"
 	"pomodo/bubbletea/button"
 	"pomodo/bubbletea/list"
 	"pomodo/helpers"
 	"pomodo/internal/database"
+	"time"
+
+	"github.com/charmbracelet/bubbles/textinput"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type AllocateTime struct {
 	List list.Model
 }
 
-func NewAllocateTimePage(keymap *bubbletea.Keymap) AllocateTime {
+func NewAllocateTimePage() AllocateTime {
 	m := AllocateTime{}
 	t := textinput.New()
 	t.Prompt = "Allocate Time: "
@@ -30,9 +29,9 @@ func NewAllocateTimePage(keymap *bubbletea.Keymap) AllocateTime {
 	m.List = list.New([]list.Item{
 		list.NewTextInput(t),
 		button.New("Confirm", func() (tea.Model, tea.Cmd) {
-			return NewHomePage(keymap), m.AllocateTime()
+			return NewHomePage(), m.AllocateTime()
 		}),
-	}, keymap)
+	})
 	return m
 }
 

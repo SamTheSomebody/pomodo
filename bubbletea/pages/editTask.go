@@ -35,7 +35,7 @@ type EditTaskPage struct {
 	HasTask bool
 }
 
-func NewEditTaskPage(taskID *uuid.UUID, keymap *bubbletea.Keymap) EditTaskPage {
+func NewEditTaskPage(taskID *uuid.UUID) EditTaskPage {
 	hasTask := taskID != nil
 	var task database.Task
 	if !hasTask {
@@ -84,7 +84,7 @@ func NewEditTaskPage(taskID *uuid.UUID, keymap *bubbletea.Keymap) EditTaskPage {
 		slider.New("Priority:      ", int(m.Task.Priority)),
 		slider.New("Enthusiasm:    ", int(m.Task.Enthusiasm)),
 		button.New("Confirm", func() (tea.Model, tea.Cmd) { return m.Submit() }))
-	m.List = list.New(items, keymap)
+	m.List = list.New(items)
 	return m
 }
 
@@ -132,7 +132,7 @@ func (m EditTaskPage) Submit() (tea.Model, tea.Cmd) {
 	if err != nil {
 		return m, bubbletea.ErrCmd(err)
 	}
-	return m, bubbletea.NewPageCmd(func() (tea.Model, tea.Cmd) { return NewHomePage(m.List.Keys), nil })
+	return m, bubbletea.NewPageCmd(func() (tea.Model, tea.Cmd) { return NewHomePage(), nil })
 }
 
 func (m EditTaskPage) View() string {

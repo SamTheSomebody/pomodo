@@ -1,16 +1,14 @@
 package pages
 
 import (
+	"pomodo/bubbletea/button"
+	"pomodo/bubbletea/list"
 	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/google/uuid"
-
-	"pomodo/bubbletea"
-	"pomodo/bubbletea/button"
-	"pomodo/bubbletea/list"
 )
 
 type ConfigureTimerPage struct {
@@ -19,7 +17,7 @@ type ConfigureTimerPage struct {
 	Duration time.Duration
 }
 
-func NewConfigureTimerPage(t *uuid.UUID, keymap *bubbletea.Keymap) ConfigureTimerPage {
+func NewConfigureTimerPage(t *uuid.UUID) ConfigureTimerPage {
 	m := ConfigureTimerPage{
 		TaskID: t,
 	}
@@ -33,7 +31,7 @@ func NewConfigureTimerPage(t *uuid.UUID, keymap *bubbletea.Keymap) ConfigureTime
 	}
 	confirmButton := button.New("Confirm", OnTimerButtonClick(m.Duration, m.TaskID))
 	// TODO Task select
-	list := list.New([]list.Item{list.NewTextInput(timerInput), confirmButton}, keymap)
+	list := list.New([]list.Item{list.NewTextInput(timerInput), confirmButton})
 	m.List = list
 	return m
 }

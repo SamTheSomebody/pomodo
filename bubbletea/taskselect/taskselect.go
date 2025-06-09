@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"pomodo/bubbletea/list"
 	"pomodo/helpers"
 	"pomodo/internal/database"
 	"strings"
@@ -39,9 +40,6 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	if !m.Focused {
-		return m, nil
-	}
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -143,4 +141,19 @@ func (m *Model) GetTaskID() *uuid.UUID {
 		return &id
 	}
 	return nil
+}
+
+func (m Model) OnSelect() (list.Item, tea.Cmd) {
+	m.SetFocused(true)
+	return m, nil
+}
+
+func (m Model) OnSubmit() (list.Item, tea.Cmd) {
+	m.SetFocused(false)
+	return m, nil
+}
+
+func (m Model) OnCancel() (list.Item, tea.Cmd) {
+	m.SetFocused(false)
+	return m, nil
 }

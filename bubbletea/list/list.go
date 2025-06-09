@@ -14,14 +14,14 @@ type Model struct {
 	Index          int
 	Items          []Item
 	IsItemSelected bool
-	Keys           *bubbletea.Keymap
+	Keys           Keymap
 	Styles         Styles
 }
 
-func New(items []Item, keymap *bubbletea.Keymap) Model {
+func New(items []Item) Model {
 	m := Model{
 		Items:  items,
-		Keys:   keymap,
+		Keys:   DefaultKeymap(),
 		Styles: DefaultStyle(),
 	}
 	return m
@@ -36,6 +36,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case bubbletea.ItemSelectMsg:
 		m.IsItemSelected = msg.IsSelected
+		m.Keys.SetNavigationEnabled(!m.IsItemSelected)
 		model, cmd := m.Items[m.Index].Update(msg)
 		m.Items[m.Index] = model.(Item)
 		return m, cmd

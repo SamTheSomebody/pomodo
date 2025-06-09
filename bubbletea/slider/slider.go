@@ -1,14 +1,13 @@
 package slider
 
 import (
+	"pomodo/bubbletea"
+	"pomodo/bubbletea/list"
 	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
-
-	"pomodo/bubbletea"
-	"pomodo/bubbletea/list"
 )
 
 type Model struct {
@@ -17,7 +16,7 @@ type Model struct {
 	Value    int
 	OldValue int
 	Label    string
-	Keymap   bubbletea.Keymap
+	Keymap   Keymap
 }
 
 func New(label string, value int) Model {
@@ -30,7 +29,7 @@ func New(label string, value int) Model {
 		Label:    label,
 		Value:    value,
 		OldValue: value,
-		Keymap:   bubbletea.DefaultKeymap(),
+		Keymap:   DefaultKeymap(),
 	}
 }
 

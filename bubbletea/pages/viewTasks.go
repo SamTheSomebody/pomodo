@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"pomodo/bubbletea"
+	"pomodo/helpers"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/google/uuid"
 	"golang.org/x/term"
-
-	"pomodo/bubbletea"
-	"pomodo/helpers"
 )
 
 /*
@@ -21,11 +20,10 @@ Name |
 */
 
 type ViewTasksPage struct {
-	Table  table.Model
-	KeyMap *bubbletea.Keymap
+	Table table.Model
 }
 
-func NewViewTasksPage(keymap *bubbletea.Keymap) tea.Model {
+func NewViewTasksPage() tea.Model {
 	db := helpers.GetDBQueries()
 	tasks, err := db.GetTasks(context.Background())
 	if err != nil {
@@ -42,6 +40,7 @@ func NewViewTasksPage(keymap *bubbletea.Keymap) tea.Model {
 		}
 	}
 	t := table.New(
+		table.WithKeyMap(table.DefaultKeyMap()),
 		table.WithFocused(true),
 		table.WithWidth(50),
 		table.WithRows(rows),
@@ -57,7 +56,7 @@ func NewViewTasksPage(keymap *bubbletea.Keymap) tea.Model {
 	height = min(height, len(tasks)+1)
 	t.SetWidth(width)
 	t.SetHeight(height)
-	return ViewTasksPage{Table: t, KeyMap: keymap}
+	return ViewTasksPage{Table: t}
 }
 
 func (m ViewTasksPage) Init() tea.Cmd {
@@ -73,7 +72,7 @@ func (m ViewTasksPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err != nil {
 				return m, bubbletea.ErrCmd(err)
 			}
-			return NewEditTaskPage(&id, m.KeyMap), nil // TODO goto page command
+			return m, bubbletea.NewPageCmd(func() (tea.Model, tea.Cmd) { return NewEditTaskPage(&id), nil })
 		case "delete":
 			id, err := uuid.Parse(m.Table.SelectedRow()[0])
 			if err != nil {
@@ -84,7 +83,8 @@ func (m ViewTasksPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err != nil {
 				return m, bubbletea.ErrCmd(err)
 			}
-			return NewViewTasksPage(m.KeyMap), bubbletea.LogCmd("Deleted: " + m.Table.SelectedRow()[0]) // TODO goto page command
+			m.Table.SetRows(append(m.Table.Rows()[:m.Table.Cursor()], m.Table.Rows()[m.Table.Cursor():]...))
+			return m, bubbletea.LogCmd("Deleted: " + m.Table.SelectedRow()[0])
 		}
 	}
 	m.Table, _ = m.Table.Update(msg)

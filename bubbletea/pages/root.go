@@ -20,7 +20,7 @@ import (
 
 type RootPage struct {
 	Pages         []tea.Model
-	Keymap        *bubbletea.Keymap
+	Keymap        bubbletea.Keymap
 	Log           string
 	Msg           tea.Msg
 	Err           error
@@ -29,20 +29,19 @@ type RootPage struct {
 }
 
 func NewRootPage() RootPage {
-	keymap := bubbletea.DefaultKeymap()
 	var page tea.Model
-	page = NewHomePage(&keymap)
+	page = NewHomePage()
 	users, err := helpers.GetDBQueries().GetUsers(context.TODO())
 	if err != nil {
 		log.Fatal(err)
 	}
 	if len(users) < 1 {
-		page = NewAddUserPage(&keymap)
+		page = NewAddUserPage()
 	}
 	allocatedTime, err := helpers.GetAllocatedTime()
 	return RootPage{
 		Pages:         []tea.Model{page},
-		Keymap:        &keymap,
+		Keymap:        bubbletea.DefaultKeymap(),
 		Help:          help.New(),
 		AllocatedTime: allocatedTime,
 		Err:           err,
@@ -79,12 +78,10 @@ func (m RootPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		switch p.(type) {
 		case HomePage:
-			m.Keymap.SetHomeKeysEnabled(true)
 			m.Pages = m.Pages[:1]
 			m.Pages[0] = p
 			return m, cmd
 		default:
-			m.Keymap.SetHomeKeysEnabled(false)
 			m.Pages = append(m.Pages, p)
 			return m, cmd
 		}
