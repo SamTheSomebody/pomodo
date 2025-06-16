@@ -1,10 +1,10 @@
 -- name: CreateTask :one
-INSERT INTO tasks (id, created_at, updated_at, name, summary, due_at, time_estimate_seconds, priority, enthusiasm)
-VALUES (?, datetime('now'), datetime('now'), ?, ?, ?, ?, ?, ?)
+INSERT INTO tasks (id, created_at, updated_at, name, summary, due_at, time_spent_seconds, time_estimate_seconds, priority, enthusiasm)
+VALUES (?, datetime('now'), datetime('now'), ?, ?, ?, ?, ?, ?, ?)
 RETURNING *;
 
 -- name: SetTask :one
-UPDATE tasks SET updated_at = datetime('now'), name = ?, summary = ?, due_at = ?, time_estimate_seconds = ?, priority = ?, enthusiasm = ?
+UPDATE tasks SET updated_at = datetime('now'), name = ?, summary = ?, due_at = ?, time_spent_seconds = ?, time_estimate_seconds = ?, priority = ?, enthusiasm = ?
 WHERE id = ? RETURNING *;
 
 -- name: GetTasks :many

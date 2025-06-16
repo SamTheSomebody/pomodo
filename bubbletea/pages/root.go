@@ -26,6 +26,7 @@ type RootPage struct {
 	Err           error
 	Help          help.Model
 	AllocatedTime time.Duration
+	TaskCount     int
 }
 
 func NewRootPage() RootPage {
@@ -38,14 +39,14 @@ func NewRootPage() RootPage {
 	if len(users) < 1 {
 		page = NewAddUserPage()
 	}
-	allocatedTime, err := helpers.GetAllocatedTime()
-	return RootPage{
-		Pages:         []tea.Model{page},
-		Keymap:        bubbletea.DefaultKeymap(),
-		Help:          help.New(),
-		AllocatedTime: allocatedTime,
-		Err:           err,
+	m := RootPage{
+		Pages:  []tea.Model{page},
+		Keymap: bubbletea.DefaultKeymap(),
+		Help:   help.New(),
+		Err:    err,
 	}
+	m.Err = m.UpdateHeaderValues()
+	return m
 }
 
 func (m RootPage) Init() tea.Cmd {
@@ -69,6 +70,7 @@ func (m RootPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 	case bubbletea.NewPageMsg:
+		m.UpdateHeaderValues()
 		m.Err = nil
 		p, cmd := msg.Constructor()
 		m.Log = fmt.Sprintf("Add page '%T' to pages [len: %v]", p, len(m.Pages))
@@ -92,25 +94,34 @@ func (m RootPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Log = msg.Message
 		return m, cmd
 	case bubbletea.ItemSelectMsg:
-		m.Keymap.SetNavigationEnabled(!msg.IsSelected)
-		// Don't return, the children still need this
+		m.Keymap.SetNavigationEnabled(!msg.IsSelected) // Don't return, the children still need this
 	}
 	m.Pages[len(m.Pages)-1], cmd = m.Pages[len(m.Pages)-1].Update(msg)
 	return m, cmd
 }
 
-func (m RootPage) View() string {
-	b := strings.Builder{}
-	// Header (Status Bar)
+func (m *RootPage) UpdateHeaderValues() error {
 	db := helpers.GetDBQueries()
 	tasks, err := db.GetTasks(context.TODO())
 	if err != nil {
-		return err.Error()
+		return err
 	}
+	m.TaskCount = len(tasks)
+	user, err := db.GetFirstUser(context.TODO())
+	if err != nil {
+		return err
+	}
+	m.AllocatedTime = time.Duration(user.AllocatedTimeSeconds) * time.Second
+	return nil
+}
+
+func (m RootPage) View() string {
+	b := strings.Builder{}
+	// Header (Status Bar)
 	w := lipgloss.Width
 	width, _, _ := term.GetSize(int(os.Stdout.Fd()))
 	statusKey := statusStyle.Render("POMODO")
-	tasksRemaining := tasksRemainingStyle.Render(fmt.Sprintf("%v tasks", len(tasks)))
+	tasksRemaining := tasksRemainingStyle.Render(fmt.Sprintf("%v tasks", m.TaskCount))
 	allocatedTime := allocatedTimeStyle.Render(m.AllocatedTime.String())
 	statusMessage := statusText.Render(fmt.Sprintf(" %T: %v ", m.Msg, m.Msg))
 	statusVal := statusText.

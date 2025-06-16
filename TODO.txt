@@ -1,4 +1,4 @@
-Add task page
+Edit task page
 - Fix Time estimate (don't think it sets to seconds)
 - Fix Due date (better format and saving)
 - What's the plan for time spent (currently not in use)
@@ -14,3 +14,5 @@ UI Design, get it looking prettier
 Dynamic Sizing
 Check that everything is idiomatic
 Add a recommendation engine
+
+Allocated time takes a page to update

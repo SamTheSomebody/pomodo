@@ -37,7 +37,8 @@ func ParseDuration(d int64) string {
 	if d == 0 {
 		return ""
 	}
-	return time.Duration(d).String()
+	t := time.Duration(d) * time.Second
+	return t.String()
 }
 
 func ValidateRange(value string) int64 {
@@ -60,6 +61,6 @@ func ValidateDuration(s string) error {
 }
 
 func ValidateTime(s string) error {
-	_, err := time.Parse("YYYY-MM-DD", s)
+	_, err := time.Parse("YYYY/MM/DD", s)
 	return err
 }

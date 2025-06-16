@@ -63,7 +63,7 @@ func NewEditTaskPage(taskID *uuid.UUID) EditTaskPage {
 	}{
 		{"Name:          ", "Task Name", m.Task.Name, func(string) error { return nil }},
 		{"Summary:       ", "Write a summary... ", m.Task.Summary, func(string) error { return nil }},
-		{"Due At:        ", "YYYY-MM-DD HH:MM", helpers.ParseTime(m.Task.DueAt), helpers.ValidateTime},
+		{"Due At:        ", "YYYY/MM/DD", helpers.ParseTime(m.Task.DueAt), helpers.ValidateTime},
 		{"Time Estimate: ", "e.g. 1h30m", helpers.ParseDuration(m.Task.TimeEstimateSeconds), helpers.ValidateDuration},
 		{"Time Spent:    ", "e.g. 2h15m30s", helpers.ParseDuration(m.Task.TimeSpentSeconds), helpers.ValidateDuration},
 	}
@@ -99,9 +99,28 @@ func (m EditTaskPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m EditTaskPage) Submit() (tea.Model, tea.Cmd) {
 	name := m.List.Items[0].(list.TextInputItem).Input.Value()
 	summary := m.List.Items[1].(list.TextInputItem).Input.Value()
-	dueAt, err := time.Parse("DD/MM/YY", m.List.Items[2].(list.TextInputItem).Input.Value())
+	dueAtString := m.List.Items[2].(list.TextInputItem).Input.Value()
+	var dueAt time.Time
+	var err error
+	if len(dueAtString) == 0 {
+		dueAt = time.Now()
+	} else {
+		dueAt, err = time.Parse("YYYY/MM/DD", dueAtString)
+		if err != nil {
+			return m, bubbletea.ErrCmd(err)
+		}
+	}
 	timeEstimate, err := time.ParseDuration(m.List.Items[3].(list.TextInputItem).Input.Value())
-	// TODO timeSpent, err := time.ParseDuration(m.List.Items[4].(list.TextInputItem).Input.Value())
+	if err != nil {
+		return m, bubbletea.ErrCmd(err)
+	}
+	var timeSpent time.Duration
+	if m.HasTask {
+		timeSpent, err = time.ParseDuration(m.List.Items[4].(list.TextInputItem).Input.Value())
+		if err != nil {
+			return m, bubbletea.ErrCmd(err)
+		}
+	}
 	priority := m.List.Items[5].(slider.Model).Value
 	enthusiasm := m.List.Items[6].(slider.Model).Value
 
@@ -113,9 +132,9 @@ func (m EditTaskPage) Submit() (tea.Model, tea.Cmd) {
 			Summary:             summary,
 			DueAt:               dueAt,
 			TimeEstimateSeconds: int64(timeEstimate.Seconds()),
-			// TODO TimeSpentSeconds:    int64(timeSpent.Seconds()),
-			Priority:   int64(priority),
-			Enthusiasm: int64(enthusiasm),
+			TimeSpentSeconds:    int64(timeSpent.Seconds()),
+			Priority:            int64(priority),
+			Enthusiasm:          int64(enthusiasm),
 		})
 	} else {
 		_, err = db.CreateTask(context.TODO(), database.CreateTaskParams{
@@ -123,10 +142,10 @@ func (m EditTaskPage) Submit() (tea.Model, tea.Cmd) {
 			Name:                name,
 			Summary:             summary,
 			DueAt:               dueAt,
+			TimeSpentSeconds:    int64(timeSpent.Seconds()),
 			TimeEstimateSeconds: int64(timeEstimate.Seconds()),
-			// TODO TimeSpentSeconds:    int64(timeSpent.Seconds()),
-			Priority:   int64(priority),
-			Enthusiasm: int64(enthusiasm),
+			Priority:            int64(priority),
+			Enthusiasm:          int64(enthusiasm),
 		})
 	}
 	if err != nil {
@@ -143,7 +162,6 @@ func (m EditTaskPage) View() string {
 		b.WriteString("Adding")
 	}
 	b.WriteString(fmt.Sprintf(" Task (%v)\n\n", m.Task.ID))
-	// b.WriteString(fmt.Sprintf("List - w: %v, h: %v, items: %v\n", m.list.Width(), m.list.Height(), len(m.list.Items())))
 	b.WriteString(m.List.View())
 	return b.String()
 }

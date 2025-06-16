@@ -7,6 +7,7 @@ import (
 	"os"
 	"pomodo/bubbletea"
 	"pomodo/helpers"
+	"slices"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
@@ -83,7 +84,7 @@ func (m ViewTasksPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err != nil {
 				return m, bubbletea.ErrCmd(err)
 			}
-			m.Table.SetRows(append(m.Table.Rows()[:m.Table.Cursor()], m.Table.Rows()[m.Table.Cursor():]...))
+			m.Table.SetRows(slices.Delete(m.Table.Rows(), m.Table.Cursor(), 1))
 			return m, bubbletea.LogCmd("Deleted: " + m.Table.SelectedRow()[0])
 		}
 	}
